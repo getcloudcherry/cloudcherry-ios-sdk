@@ -22,6 +22,22 @@ iOS SDK for CloudCherry
 
 - The Bridging Header will be created under the name ```<Your Project Name>-Bridging-Header.h```
 - Copy and paste ```#import <CloudCherryiOSFramework/CloudCherryiOSFramework.h>``` in your Bridging Header
+- Click on your project -> Choose the Project Target
+
+![Image of selecting Project Target]
+(http://i.imgur.com/WwdXfTC.png)
+
+- Click on 'General' Tab
+- Click the '+' button on 'Embedded Binaries'
+
+![Image of Embedded Binaries Section]
+(http://i.imgur.com/nJBS9Z6.png)
+
+- Choose 'CloudCherryiOSFramework.framework' from the drop-down list
+
+![Image of selecting framework]
+(http://i.imgur.com/B8LPn13.png)
+
 - Open ```Build Settings``` of your Project Target
 - Search for 'Enable Bitcode'
 - Set it to 'No' as shown below:
@@ -34,7 +50,7 @@ iOS SDK for CloudCherry
 **Static Token Initialization**
 
 ```Swift
-CloudCherrySDK().setStaticToken("STATIC TOKEN HERE")
+SurveyCC().setStaticToken("STATIC TOKEN HERE")
 ```
 
 *OR*
@@ -42,15 +58,17 @@ CloudCherrySDK().setStaticToken("STATIC TOKEN HERE")
 **Username/Password (Dynamic Token) Initialization**
 
 ```Swift
-CloudCherrySDK().setCredentials("CloudCherry Username", iPassword: "CloudCherry Password")
+SurveyCC().setCredentials("CloudCherry Username", iPassword: "CloudCherry Password")
 ```
 
 **Setting up pre-fills in SDK**
 
-User can set up their Email ID and Mobile Number as pre-fills, which will be sent along with the survey responses
+User can set up custom fields as pre-fills, which will be sent along with the survey responses
 
 ```Swift
-CloudCherrySDK().setPrefill("abc@gmail.com", iMobileNumber: "9900990099")
+var aPrefillDictionary = Dictionary<String, AnyObject>()
+aPrefillDictionary = ["prefillEmail" : "abc@gmail.com", "prefillMobile" : "9900990000"]
+SurveyCC().setPrefill(aPrefillDictionary)
 ```
 
 **Adding Config options**
@@ -58,7 +76,7 @@ CloudCherrySDK().setPrefill("abc@gmail.com", iMobileNumber: "9900990099")
 User can set up the number of valid uses and location tag
 
 ```Swift
-CloudCherrySDK().setConfig(Number of valid uses, iLocation: "Mobile Number String")
+SurveyCC().setConfig(Number of valid uses, iLocation: "Mobile Number String")
 ```
 
 - If you want to configure SDK to capture partial response and create a single use token then pass validUses = 1
@@ -72,6 +90,19 @@ CloudCherrySDK().setConfig(Number of valid uses, iLocation: "Mobile Number Strin
 - Enabling partial response ensures that the user response is collected after each question and does not wait until the user hits submit button at the end of the survey. This is ideal for mobile app users, as the users may be interrupted by phone calls.
 - Creating unlimited use token is not recommended. This creates junk tokens in your account.
 
+**Setting Custom Text Style for Single/Multi Select Buttons**
+
+User can set custom style for Single/Multi Select buttons.
+
+```Swift
+SurveyCC().setCustomTextStyle(.CC_RECTANGLE) // For Rectangular Buttons
+SurveyCC().setCustomTextStyle(.CC_CIRCLE) // For Circular Buttons
+```
+
+**Note**
+
+- If not called, SDK will suer default Text Style (Circle)
+
 **Setting Custom assets for Star Rating questions**
 
 User can set custom assets for Star Rating questions
@@ -80,7 +111,7 @@ User can set custom assets for Star Rating questions
 let anUnselectedStarImage = UIImage(named: "StarOff")! // Image shown when star is unselected
 let aSelectedStarImage = UIImage(named: "StarOn")! // Image shown when star is selected
 
-CloudCherrySDK().setCustomStarRatingAssets(anUnselectedStarImage, iStarSelectedAsset: aSelectedStarImage)
+SurveyCC().setCustomStarRatingAssets(anUnselectedStarImage, iStarSelectedAsset: aSelectedStarImage)
 ```
 
 **Setting Custom assets for Smiley questions**
@@ -93,7 +124,7 @@ var aSelectedSmileyImages = [UIImage]() // Image shown when smiley button is sel
 
 // Append your smiley images to above arrays in 'Sad' to 'Happy' order
             
-CloudCherrySDK().setCustomSmileyRatingAssets(anUnselectedSmileyImages, iSmileySelectedAssets: aSelectedSmileyImages)
+SurveyCC().setCustomSmileyRatingAssets(anUnselectedSmileyImages, iSmileySelectedAssets: aSelectedSmileyImages)
 ```
 
 **Note:** 
@@ -107,7 +138,7 @@ CloudCherrySDK().setCustomSmileyRatingAssets(anUnselectedSmileyImages, iSmileySe
 - Finally start the survey by using the underlying syntax (Note: Here 'self' is the controller on which you wish to present the survey):
 
 ```Swift
-CloudCherrySDK().showSurveyInController(self)
+SurveyCC().showSurveyInController(self)
 ```
 
 **Demo App**
