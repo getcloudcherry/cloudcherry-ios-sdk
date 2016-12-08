@@ -298,6 +298,8 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         if (aResponse.isKindOfClass(NSDictionary)) {
             
             print("SURVEY RESPONSE: \(aResponse)")
+            print("-------------------------------------------")
+            print("___________________________________________/n/n/n/n")
             
             let aQuestions = aResponse["questions"] as! [NSDictionary]
             self.welcomeText = aResponse["welcomeText"] as! String
@@ -313,13 +315,32 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             let aLogoURLSplitStrings = aCompleteLogoURL.componentsSeparatedByCharactersInSet(aLogoURLDelimiters)
             self.logoURL = aLogoURLSplitStrings[0]
             
+            var i = 0
+            
             for aQuestion in aQuestions {
                 
                 if let aQuestionTags = aQuestion["questionTags"] as? [String] {
                     
                     if (aQuestionTags.contains("ios2")) {
+                     
+                        i += 1
                         
-                        print(aQuestion)
+                        print("Question Number \(i):",aQuestion)
+                        
+                        
+                        print("----*------------*-------------*--------")
+                        
+                        if let aDisplayText = aQuestion["leadingDisplayTexts"] as? [String] {
+                            
+                            print("Checking how Array is printed:",aDisplayText)
+                            
+                        } else if let aDisplayText = aQuestion["leadingDisplayTexts"] as? [NSDictionary] {
+                            print("Checking how Dictionary is printed:",aDisplayText)
+                        } else {
+                            print("Checking how null is printed:",aQuestion["leadingDisplayTexts"])
+                        }
+                        
+                        print("----*------------*-------------*--------")
                         
                         self.questionIDs.append(aQuestion["id"] as! String)
                         self.questionTexts.append(aQuestion["text"] as! String)
