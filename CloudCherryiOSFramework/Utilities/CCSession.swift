@@ -117,3 +117,15 @@ class CCSession: NSObject {
     }
 
 }
+
+
+//Class to store responses of the answered questions
+
+class CCQuestionResponse {
+    
+    var questionID = String()
+    var questionType = String()
+    var numberResponse = Int()
+    var textResponse = [String]()
+    
+}
