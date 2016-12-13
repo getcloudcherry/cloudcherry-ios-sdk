@@ -93,12 +93,12 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     var selectButtonMaxY = CGFloat(0)
     
     var selectedNPSRating = Int()
-    var leadingDisplayTexts = [AnyObject]()
     var selectedSmileRating = Int()
     var selectedSingleSelectOption = String()
     var selectedMultiSelectOptions = [String]()
     
     var questionsAnswered = [CCQuestionResponse]()
+    var leadingDisplayTexts = [AnyObject]()
     
     var headerColorCode = String()
     var footerColorCode = String()
@@ -344,7 +344,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                         
                         print("----*------------*-------------*--------")
                         
-                        self.leadingDisplayTexts.append(aQuestion["leadingDisplayTexts"]! as AnyObject)
                         self.questionIDs.append(aQuestion["id"] as! String)
                         self.questionTexts.append(aQuestion["text"] as! String)
                         self.questionSequenceNumbers.append(aQuestion["sequence"] as! Int)
@@ -707,54 +706,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
         } else if let aDisplayTexts = leadingDisplayTexts[self.questionCounter - 1] as? [NSDictionary] {
 
-            var aConditionalTextQuestion = String()
+            conditionalTextFilter(aDisplayTexts)
             
-            print("Previous Question Type",self.questionDisplayTypes[self.questionCounter - 2])
+        } else {
             
-            for aDisplayText in aDisplayTexts {
-                
-                print("Improvise Nigga", aDisplayText)
-
-                if let aFilterQuestions = aDisplayText["filter"]!["filterquestions"] {
-                    
-                    let aFilterQuestions = aFilterQuestions as! [NSDictionary]
-                    
-                    for aFilterQuestion in aFilterQuestions {
-                        
-                        
-                        let conditionCheck = aFilterQuestion["answerCheck"] as! [String]
-                        
-                        if conditionCheck[0] == "gt" {
-                            
-                            
-                            
-                        } else if conditionCheck[0] == "lt" {
-                            
-                        } else {
-                            
-                        }
-                        
-                        
-                        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-                        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-                        print(aFilterQuestion["answerCheck"] as! [String])
-                        print(aFilterQuestion["groupBy"] as! [String])
-                        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-                        print(aFilterQuestion["number"] as! Int)
-                        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-                        print(aDisplayText["text"] as! String)
-                    }
-                } else {
-                    print("YOLO")
-                }
-                
-                
-                aConditionalTextQuestion = aDisplayText["text"] as! String
-            }
-            
-            //Set this as the question
-        
-            headerLabel.text = aConditionalTextQuestion
         }
         
         //---------------------------------------------
@@ -1191,7 +1146,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             // NPS Question
             
             if (npsQuestionAnswered) {
-                
                 aCurrentQuestionAnswered = true
                 
                 storeResponse(self.questionIDs[anIndex], iQuestionType: questionDisplayTypes[anIndex], iNumberResponse: selectedNPSRating, iTextResponse: [""],iDidRespond: aCurrentQuestionAnswered)
@@ -1410,9 +1364,103 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             questionsAnswered.append(aResponse)
         }
-        print("Printing the response: ",questionsAnswered)
+        
+        print(questionsAnswered.count)
+        print("Printing the response: ",questionsAnswered[questionsAnswered.count-1].questionType)
     }
     
+    
+    // Conditional Question Text Filter
+    
+    
+    func conditionalTextFilter(iLeadingDisplayTextOptions:[NSDictionary]) {
+        
+        for aLeadingDisplayTextOption in iLeadingDisplayTextOptions {
+            
+            if let aFilterQuestions = aLeadingDisplayTextOption["filter"]!["filterquestions"] {
+                
+                let aFilterQuestions = aFilterQuestions as! [NSDictionary]
+                
+                var didSatisfy = false
+                var didFail = false
+                
+                for aFilterQuestion in aFilterQuestions {
+                    
+                    print(aFilterQuestion)
+                    
+                    if isAnd(aFilterQuestion) {
+                        
+                        if (conditionCheck(aFilterQuestion) && !didFail) {
+
+                            didSatisfy = true
+                        
+                        } else {
+                        
+                            didFail = true
+                            break
+                        
+                        }
+    
+                    } else if isOr(aFilterQuestion) {
+                        
+                        if (conditionCheck(aFilterQuestion)) {
+
+                            didSatisfy = true
+                            break
+                        
+                        }
+                    }
+                    
+                }
+                
+                if didSatisfy && !didFail {
+                    headerLabel.text = aLeadingDisplayTextOption["text"] as? String
+                }
+                
+            } else {
+                print("No filter or filterquestions")
+                
+                
+            }
+        }
+    }
+    
+    
+    // If groupBy is AND (By Default or if Specified)
+    
+    
+    func isAnd(iFilterQuestion:NSDictionary) -> Bool {
+     
+        if iFilterQuestion["groupBy"] as! String == "AND" || iFilterQuestion["groupBy"] == nil {
+     
+            return true
+        
+        } else {
+
+        return false
+        }
+    }
+    
+    
+    // If groupBy is OR (Explicit)
+    
+    
+    func isOr(iFilterQuestion:NSDictionary) -> Bool {
+        
+        if iFilterQuestion["groupBy"] as! String == "OR" {
+            
+            return true
+            
+        } else {
+            
+            return false
+        }
+    }
+    
+    
+    func conditionCheck(iFilterQuestion:NSDictionary) -> Bool {
+        return false
+    }
     
     // Converts HEX color string to RGB (HEX received from API response)
     
