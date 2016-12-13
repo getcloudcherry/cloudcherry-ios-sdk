@@ -302,7 +302,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             print("SURVEY RESPONSE: \(aResponse)")
             print("-------------------------------------------")
-            print("___________________________________________/n/n/n/n")
             
             let aQuestions = aResponse["questions"] as! [NSDictionary]
             self.welcomeText = aResponse["welcomeText"] as! String
@@ -330,22 +329,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                         
                         print("Question Number \(i):",aQuestion)
                         
-                        print("----*------------*-------------*--------")
-                        
-                        if let aDisplayText = aQuestion["leadingDisplayTexts"] as? [String] {
-                            
-                            print("Checking how Array is printed:",aDisplayText)
-                            
-                        } else if let aDisplayText = aQuestion["leadingDisplayTexts"] as? [NSDictionary] {
-                            print("Checking how Dictionary is printed:",aDisplayText)
-                        } else {
-                            print("Checking how null is printed:",aQuestion["leadingDisplayTexts"])
-                        }
-                        
-                        print("----*------------*-------------*--------")
-                        
                         self.questionIDs.append(aQuestion["id"] as! String)
                         self.questionTexts.append(aQuestion["text"] as! String)
+                        self.leadingDisplayTexts.append(aQuestion["leadingDisplayTexts"]! as AnyObject)
                         self.questionSequenceNumbers.append(aQuestion["sequence"] as! Int)
                         
                         let aQuestionDisplayType = aQuestion["displayType"] as! String
@@ -699,20 +685,20 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         headerLabel.text = questionTexts[self.questionCounter - 1]
         
         
-        
         // Conditional Text Filter
         
-        if leadingDisplayTexts[self.questionCounter - 1] is [String] {
+        if !(self.questionCounter - 1 == 0) {
             
-        } else if let aDisplayTexts = leadingDisplayTexts[self.questionCounter - 1] as? [NSDictionary] {
-            
-            conditionalTextFilter(aDisplayTexts)
-            
-        } else {
-            
+            if leadingDisplayTexts[self.questionCounter - 1] is [String] {
+
+            } else if let aDisplayTexts = leadingDisplayTexts[self.questionCounter - 1] as? [NSDictionary] {
+
+                conditionalTextFilter(aDisplayTexts)
+                
+            } else {
+
+            }
         }
-        
-        //---------------------------------------------
         
         switch (self.questionDisplayTypes[self.questionCounter - 1]) {
             
@@ -1365,8 +1351,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             questionsAnswered.append(aResponse)
         }
         
-        print(questionsAnswered.count)
-        print("Printing the response: ",questionsAnswered[questionsAnswered.count-1].questionType)
     }
     
     
@@ -1374,7 +1358,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     
     func conditionalTextFilter(iLeadingDisplayTextOptions:[NSDictionary]) {
-        
         for aLeadingDisplayTextOption in iLeadingDisplayTextOptions {
             
             if let aFilterQuestions = aLeadingDisplayTextOption["filter"]!["filterquestions"] {
@@ -1424,14 +1407,14 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             }
         }
     }
-    
+
     
     // If groupBy is AND (By Default or if Specified)
     
     
     func isAnd(iFilterQuestion:NSDictionary) -> Bool {
         
-        if iFilterQuestion["groupBy"] as! String == "AND" || iFilterQuestion["groupBy"] == nil {
+        if iFilterQuestion["groupBy"] as? String == "AND" || iFilterQuestion["groupBy"] == nil {
             
             return true
             
