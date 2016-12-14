@@ -686,20 +686,20 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         
         // Conditional Text Filter
-        
-        if !(self.questionCounter - 1 == 0) {
-            
-            if leadingDisplayTexts[self.questionCounter - 1] is [String] {
-
-            } else if let aDisplayTexts = leadingDisplayTexts[self.questionCounter - 1] as? [NSDictionary] {
-
-                conditionalTextFilter(aDisplayTexts)
+        if (self.questionDisplayTypes[self.questionCounter - 1] != "End") {
+            if !(self.questionCounter - 1 == 0) {
                 
-            } else {
-
+                if leadingDisplayTexts[self.questionCounter - 1] is [String] {
+                    
+                } else if let aDisplayTexts = leadingDisplayTexts[self.questionCounter - 1] as? [NSDictionary] {
+                    
+                    conditionalTextFilter(aDisplayTexts)
+                    
+                } else {
+                    
+                }
             }
         }
-        
         switch (self.questionDisplayTypes[self.questionCounter - 1]) {
             
         case "Scale":
@@ -1372,7 +1372,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                     print(aFilterQuestion)
                     
                     if isAnd(aFilterQuestion) {
-                        
+                        print("isand satisfied")
                         if (conditionCheck(aFilterQuestion) && !didFail) {
                             
                             didSatisfy = true
@@ -1397,6 +1397,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 }
                 
                 if didSatisfy && !didFail {
+                    print("Are we here?")
                     headerLabel.text = aLeadingDisplayTextOption["text"] as? String
                 }
                 
@@ -1414,12 +1415,16 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     func isAnd(iFilterQuestion:NSDictionary) -> Bool {
         
-        if iFilterQuestion["groupBy"] as? String == "AND" || iFilterQuestion["groupBy"] == nil {
-            
+        print("IS AND",iFilterQuestion["groupBy"])
+        
+        if iFilterQuestion["groupBy"] as? String == "AND" || iFilterQuestion["groupBy"] is NSNull {
+            print("Returning")
             return true
             
         } else {
             
+            print("ReturningF")
+
             return false
         }
     }
@@ -1429,26 +1434,31 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     
     func isOr(iFilterQuestion:NSDictionary) -> Bool {
-        
-        if iFilterQuestion["groupBy"] as! String == "OR" {
-            
+       
+        print("IS OR",iFilterQuestion["groupBy"])
+
+        if iFilterQuestion["groupBy"] as? String == "OR" {
+            print("Returning")
+
             return true
             
         } else {
-            
+            print("ReturningF")
+
             return false
         }
     }
     
     
     func isANumberCondition(iFilterQuestion:NSDictionary) -> Bool {
-        
+        print("Check if number", iFilterQuestion["answerCheck"])
         if let aCondition = iFilterQuestion["answerCheck"] as? [String] {
             let aCondition = aCondition[0]
             if(aCondition.lowercaseString == "gt" || aCondition.lowercaseString == "lt" || aCondition.lowercaseString == "eq") {
+                print("Returning")
                 return true
             }
-            
+            return false
         }
         
         return false
@@ -1459,7 +1469,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     
     func conditionCheck(iFilterQuestion:NSDictionary) -> Bool {
-        
+        print("Checking condition")
         if isANumberCondition(iFilterQuestion) {
             
             if let kConditions = iFilterQuestion["answerCheck"] as? [String] {
@@ -1471,16 +1481,21 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                     
                     let anAnswer = intAnswerForQuestionWithID(aQuestionId)
                     let aNumber = iFilterQuestion["number"] as! Int
-                    
+                    print("Answer: \(anAnswer) number: \(aNumber)")
                     if aCondition.lowercaseString == "lt" {
                         
-                        if aNumber < anAnswer {
+                        if aNumber > anAnswer {
                             return true
                         }
                         
                     } else if aCondition.lowercaseString == "gt" {
                         
-                        if aNumber > anAnswer {
+                        print("here")
+                        
+                        if aNumber < anAnswer {
+                            
+                            print("here1")
+                            
                             return true
                         }
                         
@@ -1514,8 +1529,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                         
                         if aStringArray.contains(aCondition) {
                             didFindAll = true
+                            
                         } else {
                             didFindAll = false
+                            break
                         }
                         
                     }
