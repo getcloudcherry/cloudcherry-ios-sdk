@@ -1013,7 +1013,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         aData?.duration += (aLastViewedAt-(aData?.lastViewedAt)!)
         aData?.lastViewedAt = aLastViewedAt
         analyticsData.removeLast()
-        analyticsData.append(aData)
+        analyticsData.append(aData!)
     }
     
     // Sets up Single/Multi Select Buttons
