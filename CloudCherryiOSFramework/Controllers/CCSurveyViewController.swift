@@ -99,6 +99,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     var questionsAnswered = [CCQuestionResponse]()
     var leadingDisplayTexts = [AnyObject]()
+    var analyticsData = [CCAnalytics]()
     
     var headerColorCode = String()
     var footerColorCode = String()
@@ -661,6 +662,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     func showQuestion() {
         
         
+        
         self.removeSubViews()
         
         if (self.questionCounter <= questionTexts.count) {
@@ -684,8 +686,11 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         headerLabel.text = questionTexts[self.questionCounter - 1]
         
-        
+        if self.questionCounter - 1 == 0 {
+            updateDuration()
+        }
         // Conditional Text Filter
+        
         if (self.questionDisplayTypes[self.questionCounter - 1] != "End") {
             if !(self.questionCounter - 1 == 0) {
                 
@@ -700,6 +705,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 }
             }
         }
+        
+        var isEnd = false
+        
         switch (self.questionDisplayTypes[self.questionCounter - 1]) {
             
         case "Scale":
@@ -938,15 +946,75 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             surveyView.addSubview(cloudCherryLogoImageView)
             
             submitButton.setTitle("FINISH", forState: .Normal)
+            isEnd = true
             
         default:
-            
+            isEnd = true
             break
-            
         }
         
+        
+        // Analytics
+        
+        if !isEnd {
+        addToAnalytics()
+        }
     }
     
+
+    // Analytics Functions
+    
+    func addToAnalytics() {
+        
+        let aDate = NSDate()
+        let aLastViewedAt = Int(floor(aDate.timeIntervalSince1970 * 1000))
+        let aData = CCAnalytics(id: questionIDs[self.questionCounter - 1], name: headerLabel.text!, impression: 1, lastViewedAt: aLastViewedAt)
+        
+        var itExists = false
+        var i = 0
+        for aDictionary in analyticsData {
+            
+            if aDictionary.id == aData.id {
+                itExists = true
+                break
+            }
+            i+=1
+        }
+        
+        if !itExists {
+            analyticsData.append(aData)
+        } else {
+            let aData = analyticsData[i]
+            analyticsData.removeAtIndex(i)
+            updateAnalytics(aData)
+        }
+    }
+    
+    
+    func updateAnalytics(aData: CCAnalytics) {
+        
+        let aDate = NSDate()
+        let aLastViewedAt = Int(floor(aDate.timeIntervalSince1970 * 1000))
+        
+        aData.name = headerLabel.text!
+        aData.impression += 1
+        aData.lastViewedAt = aLastViewedAt
+        
+        analyticsData.append(aData)
+    }
+    
+    
+    func updateDuration() {
+        let aData = analyticsData.last
+        
+        let aDate = NSDate()
+        let aLastViewedAt = Int(floor(aDate.timeIntervalSince1970 * 1000))
+        
+        aData?.duration += (aLastViewedAt-(aData?.lastViewedAt)!)
+        aData?.lastViewedAt = aLastViewedAt
+        analyticsData.removeLast()
+        analyticsData.append(aData)
+    }
     
     // Sets up Single/Multi Select Buttons
     
@@ -1347,7 +1415,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 }
                 aFlag+=1
             }
-            
             questionsAnswered.append(aResponse)
         }
         
@@ -1358,6 +1425,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     
     func conditionalTextFilter(iLeadingDisplayTextOptions:[NSDictionary]) {
+        
         for aLeadingDisplayTextOption in iLeadingDisplayTextOptions {
             
             if let aFilterQuestions = aLeadingDisplayTextOption["filter"]!["filterquestions"] {

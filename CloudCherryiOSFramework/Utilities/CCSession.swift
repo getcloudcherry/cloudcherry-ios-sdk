@@ -119,7 +119,7 @@ class CCSession: NSObject {
 }
 
 
-//Class to store responses of the answered questions
+// MARK: - Class to store responses of the answered questions
 
 class CCQuestionResponse {
     
@@ -128,4 +128,25 @@ class CCQuestionResponse {
     var numberResponse = Int()
     var textResponse = [String]()
     
+}
+
+
+// MARK: - Analytics Class
+
+class CCAnalytics {
+    
+    var id = String()
+    var name = String()
+    var impression = Int()
+    var duration = Int()
+    var lastViewedAt = Int()
+    
+    init(id:String, name:String,impression:Int,lastViewedAt:Int) {
+        
+        self.id = id
+        self.name = name
+        self.impression = impression
+        self.lastViewedAt = lastViewedAt
+        self.duration = 0
+    }
 }
