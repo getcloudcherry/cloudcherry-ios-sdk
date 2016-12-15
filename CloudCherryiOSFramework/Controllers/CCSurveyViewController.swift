@@ -661,7 +661,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     func showQuestion() {
         
-        
+        print("here")
         
         self.removeSubViews()
         
@@ -686,7 +686,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         headerLabel.text = questionTexts[self.questionCounter - 1]
         
-        if self.questionCounter - 1 == 0 {
+        if !(self.questionCounter - 1 == 0) {
             updateDuration()
         }
         // Conditional Text Filter
@@ -926,6 +926,8 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             surveyView.addSubview(faciliationTextLabel)
             
+            printAnalytics()
+            
             primaryButton.hidden = false
             primaryButton.setTitle("CLOSE", forState: .Normal)
             
@@ -965,7 +967,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Analytics Functions
     
     func addToAnalytics() {
-        
+        print("Adding")
         let aDate = NSDate()
         let aLastViewedAt = Int(floor(aDate.timeIntervalSince1970 * 1000))
         let aData = CCAnalytics(id: questionIDs[self.questionCounter - 1], name: headerLabel.text!, impression: 1, lastViewedAt: aLastViewedAt)
@@ -988,6 +990,8 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             analyticsData.removeAtIndex(i)
             updateAnalytics(aData)
         }
+        
+        print(analyticsData)
     }
     
     
@@ -1012,9 +1016,30 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         aData?.duration += (aLastViewedAt-(aData?.lastViewedAt)!)
         aData?.lastViewedAt = aLastViewedAt
-        analyticsData.removeLast()
+        if analyticsData.count != 0 {
+            analyticsData.removeLast()
+        }
         analyticsData.append(aData!)
     }
+    
+    
+    func printAnalytics() {
+    
+        print("Printing Analytics")
+        
+        _ANALYTICS_DATA = [NSDictionary]()
+        
+        for anAnalyticsData in analyticsData {
+            
+            let aJSON = " { id:\(anAnalyticsData.id), name: \(anAnalyticsData.name), impression:\(anAnalyticsData.impression), duration:\(anAnalyticsData.duration), lastViewedAt:\(anAnalyticsData.lastViewedAt)}"
+            print(aJSON)
+            
+            let aDictionary = ["id" : anAnalyticsData.id, "name" : anAnalyticsData.name, "impression" : anAnalyticsData.impression, "duration" : anAnalyticsData.duration, "lastViewedAt" : anAnalyticsData.lastViewedAt]
+            _ANALYTICS_DATA.append(aDictionary)
+        }
+        
+    }
+    
     
     // Sets up Single/Multi Select Buttons
     
