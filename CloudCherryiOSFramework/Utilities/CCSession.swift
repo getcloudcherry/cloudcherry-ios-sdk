@@ -127,6 +127,7 @@ class CCQuestionResponse {
     var questionType = String()
     var numberResponse = Int()
     var textResponse = [String]()
+    var isAnswered = false
     
 }
 
