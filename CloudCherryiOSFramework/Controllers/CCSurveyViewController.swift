@@ -1623,10 +1623,79 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     }
     
     
-    func addToQuestions(iQuestion:NSDictionary) {
+    func addToQuestions(aQuestion:NSDictionary) {
         
+        let aQuestionDisplayType = aQuestion["displayType"] as! String
+        let aCCQuestion = CCQuestion()
+        
+        aCCQuestion.questionId = aQuestion["id"] as! String
+        aCCQuestion.name = aQuestion["text"] as! String
+        aCCQuestion.displayType = aQuestionDisplayType
+        
+        if !(aQuestion["leadingDisplayTexts"]! is NSNull) {
+            aCCQuestion.leadingDisplayText = (aQuestion["leadingDisplayTexts"]! as! [AnyObject])
+        }
+        
+        aCCQuestion.sequence = aQuestion["sequence"] as! Int
+        
+        if (aQuestionDisplayType == "Scale") {
+            
+            if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
+                
+                let aMultiSelectDelimiters = NSCharacterSet(charactersInString: "-")
+                let aMultiSelectSplitStrings = aMultiSelect[0].componentsSeparatedByCharactersInSet(aMultiSelectDelimiters)
+                
+                for aMultiSelectSplitString in aMultiSelectSplitStrings {
+                    
+                    let aDelimiters = NSCharacterSet(charactersInString: ";")
+                    let aSplitStrings = aMultiSelectSplitString.componentsSeparatedByCharactersInSet(aDelimiters)
+                    
+                    
+                    aCCQuestion.ratingTexts.append(aSplitStrings[1])
+                    //                                        self.ratingTexts.append(aSplitStrings[1])
+                    
+                }
+                
+            }
+            
+        }
+        
+        
+        if (aQuestionDisplayType == "Select") {
+            
+            if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
+                
+                aCCQuestion.singleSelectOption = aMultiSelect
+                
+                //                                    self.singleSelectOptions = aMultiSelect
+                
+            }
+            
+        }
+        
+        if (aQuestionDisplayType == "MultiSelect") {
+            
+            if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
+                
+                aCCQuestion.multiSelectOption = aMultiSelect
+                //                                    self.multiSelectOptions = aMultiSelect
+                
+            }
+            
+        }
+
+        sortSurveyQuestions()
     }
 
+    
+    func sortSurveyQuestions() {
+        print("Sorting")
+        surveyQuestions = surveyQuestions.sort( { $0.sequence < $1.sequence })
+        for aQuestion in surveyQuestions {
+            print(aQuestion.sequence)
+        }
+    }
+    
     
     func removeFromQuestions(iQuestionId:String) {
         //RemoveFromQuestion, analytics and stored Responses
