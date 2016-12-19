@@ -65,16 +65,17 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     var welcomeText = String()
     var thankYouText = String()
     
-    var questionIDs = [String]()
-    var questionTexts = [String]()
-    var questionDisplayTypes = [String]()
-    var questionSequenceNumbers = [Int]()
+//    var questionIDs = [String]()
+//    var questionTexts = [String]()
+//    var questionDisplayTypes = [String]()
+//    var questionSequenceNumbers = [Int]()
     
     var filteredQuestions = [NSDictionary]()
+    var surveyQuestions = [CCQuestion]()
     
     var isSingleSelect = Bool()
-    var singleSelectOptions = [String]()
-    var multiSelectOptions = [String]()
+//    var singleSelectOptions = [String]()
+//    var multiSelectOptions = [String]()
     
     var questionCounter = 0
     var primaryButtonCounter = 0
@@ -85,7 +86,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     var logoURL = String()
     var logoImage = UIImage()
     
-    var ratingTexts = [String]()
+//    var ratingTexts = [String]()
     
     var npsQuestionAnswered = false
     var starRatingQuestionAnswered = false
@@ -100,7 +101,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     var selectedMultiSelectOptions = [String]()
     
     var questionsAnswered = [CCQuestionResponse]()
-    var leadingDisplayTexts = [AnyObject]()
+//    var leadingDisplayTexts = [AnyObject]()
     var analyticsData = [CCAnalytics]()
     
     var headerColorCode = String()
@@ -334,14 +335,23 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                         
                         if (aQuestion["conditionalFilter"]!["filterquestions"] is NSNull || aQuestion["conditionalFilter"]!["filterquestions"]?!.count == 0) {
                             
-                            self.questionIDs.append(aQuestion["id"] as! String)
-                            self.questionTexts.append(aQuestion["text"] as! String)
-                            self.leadingDisplayTexts.append(aQuestion["leadingDisplayTexts"]! as AnyObject)
-                            self.questionSequenceNumbers.append(aQuestion["sequence"] as! Int)
-                            
                             let aQuestionDisplayType = aQuestion["displayType"] as! String
+                            let aCCQuestion = CCQuestion()
+                           
+                            aCCQuestion.questionId = aQuestion["id"] as! String
+                            aCCQuestion.name = aQuestion["text"] as! String
+                            aCCQuestion.displayType = aQuestionDisplayType
                             
-                            self.questionDisplayTypes.append(aQuestionDisplayType)
+                            if !(aQuestion["leadingDisplayTexts"]! is NSNull) {
+                                aCCQuestion.leadingDisplayText = (aQuestion["leadingDisplayTexts"]! as! [AnyObject])
+                            }
+                            aCCQuestion.sequence = aQuestion["sequence"] as! Int
+                            
+//                            self.questionIDs.append(aQuestion["id"] as! String)
+//                            self.questionTexts.append(aQuestion["text"] as! String)
+//                            self.leadingDisplayTexts.append(aQuestion["leadingDisplayTexts"]! as AnyObject)
+//                            self.questionSequenceNumbers.append(aQuestion["sequence"] as! Int)
+//                            self.questionDisplayTypes.append(aQuestionDisplayType)
                             
                             if (aQuestionDisplayType == "Scale") {
                                 
@@ -355,7 +365,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                                         let aDelimiters = NSCharacterSet(charactersInString: ";")
                                         let aSplitStrings = aMultiSelectSplitString.componentsSeparatedByCharactersInSet(aDelimiters)
                                         
-                                        self.ratingTexts.append(aSplitStrings[1])
+                                        
+                                        aCCQuestion.ratingTexts.append(aSplitStrings[1])
+//                                        self.ratingTexts.append(aSplitStrings[1])
                                         
                                     }
                                     
@@ -368,7 +380,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                                 
                                 if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
                                     
-                                    self.singleSelectOptions = aMultiSelect
+                                    aCCQuestion.singleSelectOption = aMultiSelect
+                                    
+//                                    self.singleSelectOptions = aMultiSelect
                                     
                                 }
                                 
@@ -378,11 +392,14 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                                 
                                 if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
                                     
-                                    self.multiSelectOptions = aMultiSelect
+                                    aCCQuestion.multiSelectOption = aMultiSelect
+//                                    self.multiSelectOptions = aMultiSelect
                                     
                                 }
                                 
                             }
+                            
+                            surveyQuestions.append(aCCQuestion)
                             
                         } else {
                             print("Filter Aaya!")
@@ -395,8 +412,15 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
             }
             
-            self.questionTexts.append("")
-            self.questionDisplayTypes.append("End")
+            let aQuestion = CCQuestion()
+            
+            aQuestion.name = ""
+            aQuestion.displayType = "End"
+            
+            surveyQuestions.append(aQuestion)
+            
+//            self.questionTexts.append("")
+//            self.questionDisplayTypes.append("End")
             
             let aLogoDownloadGroup = dispatch_group_create()
             dispatch_group_enter(aLogoDownloadGroup)
@@ -656,7 +680,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
         }
         
-        if (self.questionCounter == questionTexts.count) {
+        if (self.questionCounter == surveyQuestions.count) {        //questionTexts.count
             
             questionCtrLabel.removeFromSuperview()
             
@@ -674,9 +698,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         self.removeSubViews()
         
-        if (self.questionCounter <= questionTexts.count) {
+        if (self.questionCounter <= surveyQuestions.count) {   //questionTexts.count
             
-            questionCtrLabel.text = "\(self.questionCounter)/\(questionTexts.count - 1)"
+            questionCtrLabel.text = "\(self.questionCounter)/\(surveyQuestions.count - 1)"      //questionTexts.count
             
         }
         
@@ -693,31 +717,35 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         self.surveyView.endEditing(true)
         
-        headerLabel.text = questionTexts[self.questionCounter - 1]
+        
+        let aQuestion = surveyQuestions[self.questionCounter-1]
+        
+        headerLabel.text = aQuestion.name                                                  //questionTexts[self.questionCounter - 1]
         
         if !(self.questionCounter - 1 == 0) {
             updateDuration()
         }
         // Conditional Text Filter
         
-        if (self.questionDisplayTypes[self.questionCounter - 1] != "End") {
+        if (aQuestion.displayType != "End") {                                 //(self.questionDisplayTypes[self.questionCounter - 1] != "End")
             if !(self.questionCounter - 1 == 0) {
                 
-                if leadingDisplayTexts[self.questionCounter - 1] is [String] {
-                    
-                } else if let aDisplayTexts = leadingDisplayTexts[self.questionCounter - 1] as? [NSDictionary] {
-                    
-                    conditionalTextFilter(aDisplayTexts)
-                    
+                print("Print Leading Text: ", aQuestion.leadingDisplayText)
+                
+                if aQuestion.leadingDisplayText is [String] {               //leadingDisplayTexts[self.questionCounter - 1]
+                    print("Here3")
+                } else if let aDisplayTexts = aQuestion.leadingDisplayText as? [NSDictionary]{        //leadingDisplayTexts[self.questionCounter - 1]
+                        print("Casting successful: ", aDisplayTexts)
+                        conditionalTextFilter(aDisplayTexts)
                 } else {
-                    
+                    print("Here2")
                 }
             }
         }
         
         var isEnd = false
         
-        switch (self.questionDisplayTypes[self.questionCounter - 1]) {
+        switch (aQuestion.displayType) {                             //self.questionDisplayTypes[self.questionCounter - 1]
             
         case "Scale":
             
@@ -744,10 +772,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
             }
             
-            if (ratingTexts.count == 2) {
+            if (aQuestion.ratingTexts.count == 2) {                 //ratingTexts.count == 2
                 
                 let aRatingOneLabel = UILabel(frame: CGRect(x: 5, y: (aRatingButtonYAlign + aButtonWidth + 5), width: 50, height: 20))
-                aRatingOneLabel.text = ratingTexts[0]
+                aRatingOneLabel.text = aQuestion.ratingTexts[0]                             //ratingTexts[0]
                 aRatingOneLabel.font = HELVETICA_NEUE(10)
                 
                 surveyView.addSubview(aRatingOneLabel)
@@ -755,7 +783,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 let aRatingTwoLabel = UILabel(frame: CGRect(x: surveyView.frame.width - 105, y: (aRatingButtonYAlign + aButtonWidth + 5), width: 100, height: 20))
                 aRatingTwoLabel.textAlignment = .Right
-                aRatingTwoLabel.text = ratingTexts[1]
+                aRatingTwoLabel.text = aQuestion.ratingTexts[1]                                 //ratingTexts[1]
                 aRatingTwoLabel.font = HELVETICA_NEUE(10)
                 
                 surveyView.addSubview(aRatingTwoLabel)
@@ -979,7 +1007,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         print("Adding")
         let aDate = NSDate()
         let aLastViewedAt = Int(floor(aDate.timeIntervalSince1970 * 1000))
-        let aData = CCAnalytics(id: questionIDs[self.questionCounter - 1], name: headerLabel.text!, impression: 1, lastViewedAt: aLastViewedAt)
+        let aData = CCAnalytics(id: surveyQuestions[self.questionCounter - 1].questionId, name: headerLabel.text!, impression: 1, lastViewedAt: aLastViewedAt)      //questionIDs[self.questionCounter - 1]
         
         var itExists = false
         var i = 0
@@ -1064,11 +1092,11 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         if (iQuestionDisplayType == "MultiSelect") {
             
-            anOptions = multiSelectOptions
+            anOptions = surveyQuestions[self.questionCounter-1].multiSelectOption                //multiSelectOptions
             
         } else {
             
-            anOptions = singleSelectOptions
+            anOptions = surveyQuestions[self.questionCounter-1].singleSelectOption                                   //singleSelectOptions
             
         }
         
@@ -1228,7 +1256,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         let anIndex = self.questionCounter - 2
         
-        switch (self.questionDisplayTypes[anIndex]) {
+        switch (surveyQuestions[anIndex].displayType) {             //self.questionDisplayTypes[anIndex]
         case "Scale":
             
             // NPS Question
@@ -1236,9 +1264,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             if (npsQuestionAnswered) {
                 aCurrentQuestionAnswered = true
                 
-                storeResponse(self.questionIDs[anIndex], iQuestionType: questionDisplayTypes[anIndex], iNumberResponse: selectedNPSRating, iTextResponse: [""],iDidRespond: aCurrentQuestionAnswered)
+                storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: selectedNPSRating, iTextResponse: [""],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["numberInput" : selectedNPSRating, "questionId" : self.questionIDs[anIndex], "questionText" : self.questionTexts[anIndex]]
+                aSurveyResponse = ["numberInput" : selectedNPSRating, "questionId" :surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
                 
             }
             
@@ -1252,9 +1280,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 let aResponseText = multiLineTextView.text
                 
-                storeResponse(self.questionIDs[anIndex], iQuestionType: questionDisplayTypes[anIndex], iNumberResponse: -1, iTextResponse: [aResponseText],iDidRespond: aCurrentQuestionAnswered)
+                storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: -1, iTextResponse: [aResponseText],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["textInput" : aResponseText, "questionId" : self.questionIDs[anIndex], "questionText" : self.questionTexts[anIndex]]
+                aSurveyResponse = ["textInput" : aResponseText, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
                 
             }
             
@@ -1266,9 +1294,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 aCurrentQuestionAnswered = true
                 
-                storeResponse(self.questionIDs[anIndex], iQuestionType: questionDisplayTypes[anIndex], iNumberResponse: selectedNPSRating, iTextResponse: [""],iDidRespond: aCurrentQuestionAnswered)
+                storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: selectedNPSRating, iTextResponse: [""],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["numberInput" : selectedNPSRating, "questionId" : self.questionIDs[anIndex], "questionText" : self.questionTexts[anIndex]]
+                aSurveyResponse = ["numberInput" : selectedNPSRating, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
                 
             }
             
@@ -1280,9 +1308,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 aCurrentQuestionAnswered = true
                 
-                storeResponse(self.questionIDs[anIndex], iQuestionType: questionDisplayTypes[anIndex], iNumberResponse: -1, iTextResponse: [singleLineTextField.text!],iDidRespond: aCurrentQuestionAnswered)
+                storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: -1, iTextResponse: [singleLineTextField.text!],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["textInput" : singleLineTextField.text!, "questionId" : self.questionIDs[anIndex], "questionText" : self.questionTexts[anIndex]]
+                aSurveyResponse = ["textInput" : singleLineTextField.text!, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
                 
                 singleLineTextField.text = ""
                 
@@ -1296,9 +1324,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 aCurrentQuestionAnswered = true
                 
-                storeResponse(self.questionIDs[anIndex], iQuestionType: questionDisplayTypes[anIndex], iNumberResponse: -1, iTextResponse: [singleLineTextField.text!],iDidRespond: aCurrentQuestionAnswered)
+                storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: -1, iTextResponse: [singleLineTextField.text!],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["textInput" : singleLineTextField.text!, "questionId" : self.questionIDs[anIndex], "questionText" : self.questionTexts[anIndex]]
+                aSurveyResponse = ["textInput" : singleLineTextField.text!, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
                 
                 singleLineTextField.text = ""
                 
@@ -1312,9 +1340,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 aCurrentQuestionAnswered = true
                 
-                storeResponse(self.questionIDs[anIndex], iQuestionType: questionDisplayTypes[anIndex], iNumberResponse: selectedSmileRating, iTextResponse: [""],iDidRespond: aCurrentQuestionAnswered)
+                storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: selectedSmileRating, iTextResponse: [""],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["numberInput" : selectedSmileRating, "questionId" : self.questionIDs[anIndex], "questionText" : self.questionTexts[anIndex]]
+                aSurveyResponse = ["numberInput" : selectedSmileRating, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
                 
             }
             
@@ -1328,7 +1356,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 var selectedMultiOptionsString = ""
                 
-                storeResponse(self.questionIDs[anIndex], iQuestionType: questionDisplayTypes[anIndex], iNumberResponse: -1, iTextResponse: selectedMultiSelectOptions,iDidRespond: aCurrentQuestionAnswered)
+                storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: -1, iTextResponse: selectedMultiSelectOptions,iDidRespond: aCurrentQuestionAnswered)
                 
                 for anIndex in 0 ..< selectedMultiSelectOptions.count {
                     
@@ -1344,7 +1372,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                     
                 }
                 
-                aSurveyResponse = ["textInput" : selectedMultiOptionsString, "questionId" : self.questionIDs[anIndex], "questionText" : self.questionTexts[anIndex]]
+                aSurveyResponse = ["textInput" : selectedMultiOptionsString, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
                 
             }
             
@@ -1356,9 +1384,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 aCurrentQuestionAnswered = true
                 
-                storeResponse(self.questionIDs[anIndex], iQuestionType: questionDisplayTypes[anIndex], iNumberResponse: -1, iTextResponse: [selectedSingleSelectOption],iDidRespond: aCurrentQuestionAnswered)
+                storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: -1, iTextResponse: [selectedSingleSelectOption],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["textInput" : selectedSingleSelectOption, "questionId" : self.questionIDs[anIndex], "questionText" : self.questionTexts[anIndex]]
+                aSurveyResponse = ["textInput" : selectedSingleSelectOption, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
                 
             }
             
@@ -1405,7 +1433,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 if (aResponseStatusCode == 204) {
                     
-                    print("\(self.questionDisplayTypes[self.questionCounter - 2]) Response Submitted")
+                    print("\(self.surveyQuestions[self.questionCounter - 2].displayType) Response Submitted")
                     
                 }
                 
@@ -1460,6 +1488,8 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     
     func conditionalTextFilter(iLeadingDisplayTextOptions:[NSDictionary]) {
+        
+        print("COnditionl filter")
         
         for aLeadingDisplayTextOption in iLeadingDisplayTextOptions {
             
@@ -1547,13 +1577,22 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                         }
                     }
                     
+                    var aFlag = false
+                    
                     if didSatisfy && !didFail {
                     
                         let aConditionalId = aConditionalQuestion["id"] as! String
                         
-                        if !questionIDs.contains(aConditionalId) {
+                        for aQuestion in surveyQuestions {
                             
-                            addToQuestions(aConditionalQuestion)
+                            if aQuestion.questionId == aConditionalId {
+                                aFlag = true
+                                break
+                            }
+                        }
+                        
+                        if !aFlag {
+                            addToQuestions(aConditionalQuestion)    // REWRITE
                             anAddedCount+=1
                         }
                         
@@ -1561,10 +1600,16 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                     
                         let aConditionalId = aConditionalQuestion["id"] as! String
                         
-                        if !questionIDs.contains(aConditionalId) {
+                        for aQuestion in surveyQuestions {
                             
-                            aRemovedCount+=1
+                            if aQuestion.questionId == aConditionalId {
+                                aFlag = true
+                                break
+                            }
+                        }
+                        if aFlag {
                             removeFromQuestions(aConditionalId)
+                            aRemovedCount += 1
                         }
                     }
                     
@@ -1573,7 +1618,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         }
         
         if anAddedCount > 0 || aRemovedCount > 0 {
-            print("Added/Removed a Question by conditional flow") 
+            print("Added/Removed a Question by conditional flow. YOu have to add a lot here  ")
         }
     }
     

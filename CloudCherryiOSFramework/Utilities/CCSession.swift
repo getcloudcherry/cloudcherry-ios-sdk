@@ -119,6 +119,22 @@ class CCSession: NSObject {
 }
 
 
+// MARK: - Question Class
+
+
+class CCQuestion {
+    
+    var questionId = String()
+    var name = String()
+    var leadingDisplayText = [AnyObject]()
+    var sequence = Int()
+    var displayType = String()
+    var ratingTexts = [String]()
+    var singleSelectOption = [String]()
+    var multiSelectOption = [String]()
+}
+
+
 // MARK: - Class to store responses of the answered questions
 
 class CCQuestionResponse {
@@ -128,7 +144,6 @@ class CCQuestionResponse {
     var numberResponse = Int()
     var textResponse = [String]()
     var isAnswered = false
-    
 }
 
 
