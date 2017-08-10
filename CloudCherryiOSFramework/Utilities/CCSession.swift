@@ -117,3 +117,52 @@ class CCSession: NSObject {
     }
 
 }
+
+
+// MARK: - Question Class
+
+
+class CCQuestion {
+    
+    var questionId = String()
+    var name = String()
+    var leadingDisplayText = [AnyObject]()
+    var sequence = Int()
+    var displayType = String()
+    var ratingTexts = [String]()
+    var singleSelectOption = [String]()
+    var multiSelectOption = [String]()
+}
+
+
+// MARK: - Class to store responses of the answered questions
+
+class CCQuestionResponse {
+    
+    var questionID = String()
+    var questionType = String()
+    var numberResponse = Int()
+    var textResponse = [String]()
+    var isAnswered = false
+}
+
+
+// MARK: - Analytics Class
+
+class CCAnalytics {
+    
+    var id = String()
+    var name = String()
+    var impression = Int()
+    var duration = Int()
+    var lastViewedAt = Int()
+    
+    init(id:String, name:String,impression:Int,lastViewedAt:Int) {
+        
+        self.id = id
+        self.name = name
+        self.impression = impression
+        self.lastViewedAt = lastViewedAt
+        self.duration = 0
+    }
+}

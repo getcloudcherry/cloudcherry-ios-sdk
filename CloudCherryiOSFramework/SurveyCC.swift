@@ -8,6 +8,9 @@
 
 import UIKit
 
+
+var _ANALYTICS_DATA = [NSDictionary]()
+
 public class SurveyCC: NSObject {
     
     
@@ -53,6 +56,16 @@ public class SurveyCC: NSObject {
             
         }
         
+    }
+    
+    
+    public func getAnalyticsDataAfterTestFinish() -> [NSDictionary]? {
+        
+        if _ANALYTICS_DATA.count > 0 {
+            return _ANALYTICS_DATA
+        } else {
+            return nil
+        }
     }
     
     
