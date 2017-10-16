@@ -19,7 +19,7 @@ class CCLoadingView: UIView {
     
     
     var message = String()
-    var style = UIActivityIndicatorViewStyle.White
+    var style = UIActivityIndicatorViewStyle.white
     
     
     // MARK: - Initialization
@@ -32,11 +32,11 @@ class CCLoadingView: UIView {
      - parameter iMessage: The message to be dispayed while showing the loading view.
      */
     
-    func initWithFrame(iFrame: CGRect, message iMessage: String) {
+    func initWithFrame(_ iFrame: CGRect, message iMessage: String) {
         
         self.frame = iFrame
         self.backgroundColor = UIColor(red: 0/255, green: 0/255, blue: 0/255, alpha: 0.8)
-        self.style = .White
+        self.style = .white
         self.message = iMessage
         
     }
@@ -51,17 +51,17 @@ class CCLoadingView: UIView {
     func startLoading() {
         
         let aLoadingIndicator = UIActivityIndicatorView()
-        aLoadingIndicator.center = CGPointMake(UIScreen.mainScreen().bounds.size.width / 2, UIScreen.mainScreen().bounds.size.height / 2)
+        aLoadingIndicator.center = CGPoint(x: UIScreen.main.bounds.size.width / 2, y: UIScreen.main.bounds.size.height / 2)
         aLoadingIndicator.activityIndicatorViewStyle = self.style
         self.addSubview(aLoadingIndicator)
         aLoadingIndicator.startAnimating()
         
-        let aFrame = CGRectMake(0, CGRectGetMaxY(aLoadingIndicator.frame) + 10, self.bounds.size.width, 30)
+        let aFrame = CGRect(x: 0, y: aLoadingIndicator.frame.maxY + 10, width: self.bounds.size.width, height: 30)
         let aLabel = UILabel(frame: aFrame)
-        aLabel.backgroundColor = UIColor.clearColor()
-        aLabel.textAlignment = .Center
-        aLabel.font = UIFont.systemFontOfSize(15)
-        aLabel.textColor = UIColor.whiteColor()
+        aLabel.backgroundColor = UIColor.clear
+        aLabel.textAlignment = .center
+        aLabel.font = UIFont.systemFont(ofSize: 15)
+        aLabel.textColor = UIColor.white
         aLabel.text = self.message
         
         self.addSubview(aLabel)

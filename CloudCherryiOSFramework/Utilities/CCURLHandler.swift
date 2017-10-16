@@ -18,7 +18,7 @@ class CCURLHandler: NSObject {
     
     // MARK: - Initialization Method
     
-    func initWithURLString(iURLString: String) {
+    func initWithURLString(_ iURLString: String) {
         
         self.urlString = iURLString
         
@@ -27,60 +27,60 @@ class CCURLHandler: NSObject {
     // MARK: - Public Methods
     
     
-    func responseForFormURLEncodedString(iPostBody: String) -> NSDictionary {
+    func responseForFormURLEncodedString(_ iPostBody: String) -> AnyObject {
         
-        let anURL = NSURL(string: self.urlString)!
-        let aPostData = iPostBody.dataUsingEncoding(NSUTF8StringEncoding)!
-        let PostLength = "\(UInt(aPostData.length))"
+        let anURL = URL(string: self.urlString)!
+        let aPostData = iPostBody.data(using: String.Encoding.utf8)!
+        let PostLength = "\(UInt(aPostData.count))"
         
-        let anURLRequest = NSMutableURLRequest(URL: anURL, cachePolicy: .ReloadIgnoringLocalCacheData, timeoutInterval: 30.0)
+        let anURLRequest = NSMutableURLRequest(url: anURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30.0)
         anURLRequest.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         anURLRequest.setValue(PostLength, forHTTPHeaderField: "Content-Length")
-        anURLRequest.HTTPMethod = "POST"
-        anURLRequest.HTTPBody = aPostData
+        anURLRequest.httpMethod = "POST"
+        anURLRequest.httpBody = aPostData
         
-        let aResponse = self.responseForRequest(anURLRequest)
+        let aResponse = self.responseForRequest(anURLRequest as URLRequest)
         
         return aResponse
         
     }
     
     
-    func responseForJSONObject(iPostObject: AnyObject) -> NSDictionary {
+    func responseForJSONObject(_ iPostObject: AnyObject) -> AnyObject {
         
-        let anURL = NSURL(string: self.urlString)!
-        let aPostData = try! NSJSONSerialization.dataWithJSONObject(iPostObject, options: .PrettyPrinted)
+        let anURL = URL(string: self.urlString)!
+        let aPostData = try! JSONSerialization.data(withJSONObject: iPostObject, options: .prettyPrinted)
         
-        let anURLRequest = NSMutableURLRequest(URL: anURL, cachePolicy: .ReloadIgnoringLocalCacheData, timeoutInterval: 30.0)
+        let anURLRequest = NSMutableURLRequest(url: anURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30.0)
         anURLRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         anURLRequest.setValue("application/json", forHTTPHeaderField: "Accept")
-        anURLRequest.HTTPBody = aPostData
-        anURLRequest.HTTPMethod = "POST"
+        anURLRequest.httpBody = aPostData
+        anURLRequest.httpMethod = "POST"
         
         if (!SDKSession.accessToken.isEmpty) {
             anURLRequest.setValue(SDKSession.accessToken, forHTTPHeaderField: "Authorization")
         }
         
-        let aResponse = self.responseForRequest(anURLRequest)
+        let aResponse = self.responseForRequest(anURLRequest as URLRequest)
         
         return aResponse
     }
     
     
     
-    func getResponse() -> NSDictionary {
+    func getResponse() -> AnyObject {
         
-        let anURL = NSURL(string: self.urlString)!
+        let anURL = URL(string: self.urlString)!
         
-        let anURLRequest = NSMutableURLRequest(URL: anURL, cachePolicy: .ReloadIgnoringLocalCacheData, timeoutInterval: 30.0)
+        let anURLRequest = NSMutableURLRequest(url: anURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30.0)
         anURLRequest.setValue("application/json", forHTTPHeaderField: "Accept")
-        anURLRequest.HTTPMethod = "GET"
+        anURLRequest.httpMethod = "GET"
         
         if (!SDKSession.accessToken.isEmpty) {
             anURLRequest.setValue(SDKSession.accessToken, forHTTPHeaderField: "Authorization")
         }
         
-        let aResponse = self.responseForRequest(anURLRequest)
+        let aResponse = self.responseForRequest(anURLRequest as URLRequest)
         
         return aResponse
         
@@ -90,49 +90,61 @@ class CCURLHandler: NSObject {
     // MARK: - Private
     
     
-    func responseForRequest(iRequest: NSURLRequest) -> NSDictionary {
+    func responseForRequest(_ iRequest: URLRequest) -> AnyObject {
         
-        var aResponse: NSDictionary? = nil
+        var aResponse: AnyObject? = nil
         
-        print("URL:     \(iRequest.URL)")
-        print("HEADERS: \(iRequest.allHTTPHeaderFields)")
-        
-        if (iRequest.HTTPBody != nil) {
-            print("POST:    \(String(data: iRequest.HTTPBody!, encoding: NSUTF8StringEncoding))")
+        print("URL:     \(String(describing: iRequest.url))")
+        if (iRequest.allHTTPHeaderFields != nil && (iRequest.allHTTPHeaderFields?.count)! > 0) {
+            print("HEADERS: \(String(describing: iRequest.allHTTPHeaderFields))")
+        }
+        if (iRequest.httpBody != nil) {
+            print("POST:    \(String(describing: String(data: iRequest.httpBody!, encoding: String.Encoding.utf8)))")
         }
         
-        let aRequestGroup = dispatch_group_create()
-        dispatch_group_enter(aRequestGroup)
+        let aRequestGroup = DispatchGroup()
+        aRequestGroup.enter()
         
-        let aSessionTask = NSURLSession.sharedSession().dataTaskWithRequest(iRequest, completionHandler: { (iData: NSData?,  iResponse: NSURLResponse?, iError: NSError?) -> Void in
-            
-            if let aResponseObject = try? NSJSONSerialization.JSONObjectWithData(iData!, options: .MutableContainers) as! NSDictionary {
-                
-                aResponse = aResponseObject
-                
-                if (aResponse == nil) {
-                    if (iData != nil) {
-                        let aResponseString = String(data: iData!, encoding: NSUTF8StringEncoding)
-                        print("1. Error Response: \(aResponseString)")
-                    }
-                    else if (iError != nil) {
-                        let anErrorString = iError!.localizedDescription
-                        print("2. Error Response: \(anErrorString)")
+        let aSessionTask = URLSession.shared.dataTask(with: iRequest as URLRequest) { iData, iResponse, iError in
+            if (iData != nil) {
+                let aHTTPResponse = iResponse as? HTTPURLResponse
+                print("RESPONSE CODE: \(aHTTPResponse?.statusCode)")
+                let aResponseObject = try? JSONSerialization.jsonObject(with: iData!, options: .mutableContainers)
+                if (aResponseObject != nil)  {
+                    print("RESPONSE OBJECT NOT NIL")
+                    if (aResponseObject is NSDictionary)  {
+                        print("DICTIONARY RESPONSE")
+                        aResponse = NSDictionary(dictionary: aResponseObject as! NSDictionary)
+                    } else if (aResponseObject is NSArray)  {
+                        print("ARRAY RESPONSE")
+                        aResponse = NSArray(array: aResponseObject as! NSArray)
+                    } else {
+                        if (iData != nil) {
+                            let aResponeString = String(data: iData!, encoding: String.Encoding.utf8)! as AnyObject
+                            aResponse = NSError(domain: "Error Response: \(aResponeString)", code: 56781, userInfo: nil)
+                        }
                     }
                 }
-                dispatch_group_leave(aRequestGroup)
-                
-            } else {
-                
-                NSException(name: "Error", reason: "Inavlid Token", userInfo: nil).raise()
-                dispatch_group_leave(aRequestGroup)
-                
             }
-        })
-        aSessionTask.resume()
-        dispatch_group_wait(aRequestGroup, DISPATCH_TIME_FOREVER)
+            
+            if (aResponse == nil) {
+                if (iError != nil) {
+                    aResponse = iError as AnyObject?
+                }
+            }
+            
+            aRequestGroup.leave()
+        }
         
-        return aResponse!
+        aSessionTask.resume()
+        _ = aRequestGroup.wait(timeout: DispatchTime.distantFuture)
+        
+        if (aResponse != nil) {
+            print("RESPONSE: \(aResponse!)")
+            return aResponse!
+        } else {
+            return NSError(domain: "Error Response: Please try again later", code: 56781, userInfo: nil)
+        }
         
     }
     

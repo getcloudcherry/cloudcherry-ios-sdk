@@ -6,7 +6,23 @@
 	objectVersion = 46;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		C9B288C01F947CC200904290 /* UniversalCCSDK */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = C9B288C11F947CC200904290 /* Build configuration list for PBXAggregateTarget "UniversalCCSDK" */;
+			buildPhases = (
+				C9B288C41F947CCD00904290 /* ShellScript */,
+			);
+			dependencies = (
+			);
+			name = UniversalCCSDK;
+			productName = UniversalCCSDK;
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
+		C9B288BD1F947C6600904290 /* SurveyConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B288BC1F947C6600904290 /* SurveyConfig.swift */; };
+		C9B288BF1F947C7E00904290 /* ThrottlingLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B288BE1F947C7E00904290 /* ThrottlingLogic.swift */; };
 		C9C132081DA25CC90034E7D3 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C9C132071DA25CC90034E7D3 /* Media.xcassets */; };
 		C9C1320C1DA25D200034E7D3 /* FloatRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9C1320B1DA25D200034E7D3 /* FloatRatingView.swift */; };
 		C9C1320E1DA25D2F0034E7D3 /* CCSurveyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9C1320D1DA25D2F0034E7D3 /* CCSurveyViewController.swift */; };
@@ -31,6 +47,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C9B288BC1F947C6600904290 /* SurveyConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyConfig.swift; sourceTree = "<group>"; };
+		C9B288BE1F947C7E00904290 /* ThrottlingLogic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThrottlingLogic.swift; sourceTree = "<group>"; };
 		C9C132071DA25CC90034E7D3 /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
 		C9C1320B1DA25D200034E7D3 /* FloatRatingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FloatRatingView.swift; sourceTree = "<group>"; };
 		C9C1320D1DA25D2F0034E7D3 /* CCSurveyViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CCSurveyViewController.swift; sourceTree = "<group>"; };
@@ -104,6 +122,8 @@
 			isa = PBXGroup;
 			children = (
 				C9C1320F1DA260210034E7D3 /* SurveyCC.swift */,
+				C9B288BC1F947C6600904290 /* SurveyConfig.swift */,
+				C9B288BE1F947C7E00904290 /* ThrottlingLogic.swift */,
 			);
 			name = SDK;
 			sourceTree = "<group>";
@@ -255,14 +275,21 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 0730;
-				LastUpgradeCheck = 0730;
+				LastUpgradeCheck = 0830;
 				ORGANIZATIONNAME = "Vishal Chandran";
 				TargetAttributes = {
+					C9B288C01F947CC200904290 = {
+						CreatedOnToolsVersion = 8.3.3;
+						DevelopmentTeam = TUNSVZ59XW;
+						ProvisioningStyle = Automatic;
+					};
 					C9D6F05E1D94FDCF00BE8273 = {
 						CreatedOnToolsVersion = 7.3.1;
+						LastSwiftMigration = 0830;
 					};
 					C9D6F0681D94FDCF00BE8273 = {
 						CreatedOnToolsVersion = 7.3.1;
+						LastSwiftMigration = 0830;
 					};
 				};
 			};
@@ -280,6 +307,7 @@
 			targets = (
 				C9D6F05E1D94FDCF00BE8273 /* CloudCherryiOSFramework */,
 				C9D6F0681D94FDCF00BE8273 /* CloudCherryiOSFrameworkTests */,
+				C9B288C01F947CC200904290 /* UniversalCCSDK */,
 			);
 		};
 /* End PBXProject section */
@@ -302,14 +330,32 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		C9B288C41F947CCD00904290 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/bin/sh\nUNIVERSAL_OUTPUTFOLDER=${BUILD_DIR}/${CONFIGURATION}-universal\n# make sure the output directory exists\nmkdir -p \"${UNIVERSAL_OUTPUTFOLDER}\"\n# Step 1. Build Device and Simulator versions\nxcodebuild -target \"CloudCherryiOSFramework\" ONLY_ACTIVE_ARCH=NO -configuration ${CONFIGURATION} -sdk iphoneos  BUILD_DIR=\"${BUILD_DIR}\" BUILD_ROOT=\"${BUILD_ROOT}\" clean build\nxcodebuild -target \"CloudCherryiOSFramework\" -configuration ${CONFIGURATION} -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO BUILD_DIR=\"${BUILD_DIR}\" BUILD_ROOT=\"${BUILD_ROOT}\" clean build\n# Step 2. Copy the framework structure (from iphoneos build) to the universal folder\ncp -R \"${BUILD_DIR}/${CONFIGURATION}-iphoneos/CloudCherryiOSFramework.framework\" \"${UNIVERSAL_OUTPUTFOLDER}/\"\n# Step 3. Copy Swift modules from iphonesimulator build (if it exists) to the copied framework directory\nSIMULATOR_SWIFT_MODULES_DIR=\"${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/CloudCherryiOSFramework.framework/Modules/CloudCherryiOSFramework.swiftmodule/.\"\nif [ -d \"${SIMULATOR_SWIFT_MODULES_DIR}\" ]; then\ncp -R \"${SIMULATOR_SWIFT_MODULES_DIR}\" \"${UNIVERSAL_OUTPUTFOLDER}/CloudCherryiOSFramework.framework/Modules/CloudCherryiOSFramework.swiftmodule\"\nfi\n# Step 4. Create universal binary file using lipo and place the combined executable in the copied framework directory\nlipo -create -output \"${UNIVERSAL_OUTPUTFOLDER}/CloudCherryiOSFramework.framework/CloudCherryiOSFramework\" \"${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/CloudCherryiOSFramework.framework/CloudCherryiOSFramework\" \"${BUILD_DIR}/${CONFIGURATION}-iphoneos/CloudCherryiOSFramework.framework/CloudCherryiOSFramework\"\n# Step 5. Convenience step to copy the framework to the project's directory\ncp -R \"${UNIVERSAL_OUTPUTFOLDER}/CloudCherryiOSFramework.framework\" \"${PROJECT_DIR}\"\n# Step 6. Convenience step to open the project's directory in Finder\n# open \"${PROJECT_DIR}\"";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		C9D6F05A1D94FDCF00BE8273 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				C9C132121DA260BE0034E7D3 /* CCSession.swift in Sources */,
+				C9B288BD1F947C6600904290 /* SurveyConfig.swift in Sources */,
 				C9C1320E1DA25D2F0034E7D3 /* CCSurveyViewController.swift in Sources */,
 				C9C132101DA260210034E7D3 /* SurveyCC.swift in Sources */,
+				C9B288BF1F947C7E00904290 /* ThrottlingLogic.swift in Sources */,
 				C9C132171DA277270034E7D3 /* CCURLHandler.swift in Sources */,
 				C9C1320C1DA25D200034E7D3 /* FloatRatingView.swift in Sources */,
 				C9C132151DA264220034E7D3 /* CCLoadingView.swift in Sources */,
@@ -336,6 +382,28 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		C9B288C21F947CC200904290 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEVELOPMENT_TEAM = TUNSVZ59XW;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.2;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = "arm64 armv7 armv7s i386 x86_64";
+			};
+			name = Debug;
+		};
+		C9B288C31F947CC200904290 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEVELOPMENT_TEAM = TUNSVZ59XW;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.2;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = "arm64 armv7 armv7s i386 x86_64";
+			};
+			name = Release;
+		};
 		C9D6F0711D94FDCF00BE8273 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -350,8 +418,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -399,8 +469,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -420,6 +492,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -431,21 +504,25 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				COPY_PHASE_STRIP = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				COPY_PHASE_STRIP = NO;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_BITCODE = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				ENABLE_BITCODE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INFOPLIST_FILE = CloudCherryiOSFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.2;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.wow.CloudCherryiOSFramework;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 3.0;
+				VALID_ARCHS = "arm64 armv7 armv7s i386 x86_64";
 			};
 			name = Debug;
 		};
@@ -453,20 +530,24 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				COPY_PHASE_STRIP = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				COPY_PHASE_STRIP = NO;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_BITCODE = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				ENABLE_BITCODE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INFOPLIST_FILE = CloudCherryiOSFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.2;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.wow.CloudCherryiOSFramework;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 3.0;
+				VALID_ARCHS = "arm64 armv7 armv7s i386 x86_64";
 			};
 			name = Release;
 		};
@@ -477,6 +558,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.wow.CloudCherryiOSFrameworkTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -487,12 +569,21 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.wow.CloudCherryiOSFrameworkTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C9B288C11F947CC200904290 /* Build configuration list for PBXAggregateTarget "UniversalCCSDK" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C9B288C21F947CC200904290 /* Debug */,
+				C9B288C31F947CC200904290 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		C9D6F0591D94FDCF00BE8273 /* Build configuration list for PBXProject "CloudCherryiOSFramework" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
