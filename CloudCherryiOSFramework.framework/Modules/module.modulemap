@@ -1,0 +1,10 @@
+framework module CloudCherryiOSFramework {
+  umbrella header "CloudCherryiOSFramework.h"
+
+  export *
+  module * { export * }
+}
+
+module CloudCherryiOSFramework.Swift {
+    header "CloudCherryiOSFramework-Swift.h"
+}

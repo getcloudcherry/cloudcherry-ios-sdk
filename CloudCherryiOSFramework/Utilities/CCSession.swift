@@ -90,6 +90,16 @@ class CCSession: NSObject {
     */
     var customTextStyle = SurveyCC.CustomStyleText.CC_CIRCLE
     
+    /**
+     Email ID for Unique ID
+     */
+    var uniqueEmail = String()
+    
+    /**
+     Mobile Number for Unique ID
+     */
+    var uniqueMobile = String()
+    
     
     // MARK: - Public Methods
     
@@ -101,7 +111,7 @@ class CCSession: NSObject {
      - parameter iMessage: The message to be displayed while the loading page is displayed
      */
     
-    func showLoadingOn(iView: UIView, withMessage iMessage: String) {
+    func showLoadingOn(_ iView: UIView, withMessage iMessage: String) {
         
         self.loadingView.initWithFrame(iView.bounds, message: iMessage)
         iView.addSubview(self.loadingView)

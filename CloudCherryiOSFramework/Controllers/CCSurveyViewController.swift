@@ -17,19 +17,36 @@ var _PARTIAL_SURVEY_COMPLETE = false
 
 import UIKit
 
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
+
 
 class headerFooterView : UIView {
     
     override init(frame: CGRect) {
-        
         super.init(frame : frame)
-        
     }
     
     required init?(coder aDecoder: NSCoder) {
-        
         fatalError("init(coder:) has not been implemented")
-        
     }
     
 }
@@ -38,15 +55,11 @@ class headerFooterView : UIView {
 class questionCounterLabel : UILabel {
     
     override init(frame: CGRect) {
-        
         super.init(frame : frame)
-        
     }
     
     required init?(coder aDecoder: NSCoder) {
-        
         fatalError("init(coder:) has not been implemented")
-        
     }
     
 }
@@ -65,17 +78,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     var welcomeText = String()
     var thankYouText = String()
     
-//    var questionIDs = [String]()
-//    var questionTexts = [String]()
-//    var questionDisplayTypes = [String]()
-//    var questionSequenceNumbers = [Int]()
-    
     var filteredQuestions = [NSDictionary]()
     var surveyQuestions = [CCQuestion]()
     
     var isSingleSelect = Bool()
-//    var singleSelectOptions = [String]()
-//    var multiSelectOptions = [String]()
     
     var questionCounter = 0
     var primaryButtonCounter = 0
@@ -85,8 +91,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     var logoURL = String()
     var logoImage = UIImage()
-    
-//    var ratingTexts = [String]()
     
     var npsQuestionAnswered = false
     var starRatingQuestionAnswered = false
@@ -101,7 +105,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     var selectedMultiSelectOptions = [String]()
     
     var questionsAnswered = [CCQuestionResponse]()
-//    var leadingDisplayTexts = [AnyObject]()
     var analyticsData = [CCAnalytics]()
     
     var headerColorCode = String()
@@ -159,11 +162,11 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         if (_IS_USING_STATIC_TOKEN) {
             
-            self.performSelectorInBackground(#selector(CCSurveyViewController.fetchSurveys), withObject: nil)
+            self.performSelector(inBackground: #selector(CCSurveyViewController.fetchSurveys), with: nil)
             
         } else {
             
-            self.performSelectorInBackground(#selector(CCSurveyViewController.loginUser), withObject: nil)
+            self.performSelector(inBackground: #selector(CCSurveyViewController.loginUser), with: nil)
             
         }
         
@@ -177,19 +180,19 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         // Adding Observers for Keyboard Show/Hide
         
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(CCSurveyViewController.keyboardWillShow(_:)), name: UIKeyboardWillShowNotification, object: self.view.window)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(CCSurveyViewController.keyboardWillHide(_:)), name: UIKeyboardWillHideNotification, object: self.view.window)
+        NotificationCenter.default.addObserver(self, selector: #selector(CCSurveyViewController.keyboardWillShow(_:)), name: NSNotification.Name.UIKeyboardWillShow, object: self.view.window)
+        NotificationCenter.default.addObserver(self, selector: #selector(CCSurveyViewController.keyboardWillHide(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: self.view.window)
         
         
     }
     
     
-    override func viewDidDisappear(animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         
         // Removing Observers
         
-        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillShowNotification, object: self.view.window)
-        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillHideNotification, object: self.view.window)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillShow, object: self.view.window)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: self.view.window)
         
     }
     
@@ -203,40 +206,31 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // MARK: - Notification Methods for Keyboard Show/Hide
     
     
-    func keyboardWillShow(notification: NSNotification) {
-        
+    func keyboardWillShow(_ notification: Notification) {
         if (!keyboardAppeared) {
-            
             keyboardAppeared = true
             
             if yOffset == 0 {
                 yOffset = self.surveyView.frame.origin.y
                 self.surveyView.frame.origin.y = 20
             }
-            
         }
-        
     }
     
     
-    func keyboardWillHide(notification: NSNotification) {
-        
+    func keyboardWillHide(_ notification: Notification) {
         if (keyboardAppeared) {
-            
             keyboardAppeared = false
             
             if yOffset != 0 {
                 self.surveyView.frame.origin.y = yOffset
                 yOffset = 0
             }
-            
         }
-        
     }
     
     
     func loginUser() {
-        
         let anAPI = "\(BASE_URL)\(POST_LOGIN_TOKEN)"
         let anUsername = ENCODE_STRING(SDKSession.username)
         let aPassword = ENCODE_STRING(SDKSession.password)
@@ -248,53 +242,37 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         let aResponse = anURLHandler.responseForFormURLEncodedString(aPostString)
         
-        if (aResponse.isKindOfClass(NSDictionary)) {
-            
-            print("LOGIN RESPONSE: \(aResponse)")
+        if (aResponse.isKind(of: NSDictionary.self)) {
             
             if let anAccessToken = aResponse["access_token"] as? String {
-                
                 SDKSession.accessToken = "Bearer \(anAccessToken)"
                 
                 self.createSurveyToken()
-                
             }
-            
         }
-        
     }
     
     
     func createSurveyToken() {
-        
         let anAPI = "\(BASE_URL)\(POST_CREATE_SURVEY_TOKEN)"
-        let aPostDetail = ["token" : "iostest", "location" : SDKSession.location, "validUses" : SDKSession.numberOfValidUses]
+        let aPostDetail = ["token" : "iostest", "location" : SDKSession.location, "validUses" : SDKSession.numberOfValidUses] as [String : Any]
         
         let anURLHandler = CCURLHandler()
         anURLHandler.initWithURLString(anAPI)
         
-        let aResponse = anURLHandler.responseForJSONObject(aPostDetail)
+        let aResponse = anURLHandler.responseForJSONObject(aPostDetail as AnyObject)
         
-        if (aResponse.isKindOfClass(NSDictionary)) {
-            
-            print("TOKEN RESPONSE: \(aResponse)")
+        if (aResponse.isKind(of: NSDictionary.self)) {
             
             if let aSurveyToken = aResponse["id"] as? String {
-                
                 SDKSession.surveyToken = aSurveyToken
-                
                 self.fetchSurveys()
-                
             }
-            
         }
-        
-        
     }
     
     
     func fetchSurveys() {
-        
         let anAPI = "\(BASE_URL)\(GET_QUESTIONS_API)"
         
         let anURLHandler = CCURLHandler()
@@ -302,10 +280,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         let aResponse = anURLHandler.getResponse()
         
-        if (aResponse.isKindOfClass(NSDictionary)) {
+        if (aResponse.isKind(of: NSDictionary.self)) {
             
-            print("SURVEY RESPONSE: \(aResponse)")
-            print("-------------------------------------------")
+//            print("SURVEY RESPONSE: \(aResponse)")
+//            print("-------------------------------------------")
             
             let aQuestions = aResponse["questions"] as! [NSDictionary]
             self.welcomeText = aResponse["welcomeText"] as! String
@@ -317,95 +295,63 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             self.footerColorCode = aResponse["colorCode2"] as! String
             self.backgroundColorCode = aResponse["colorCode3"] as! String
             
-            let aLogoURLDelimiters = NSCharacterSet(charactersInString: "?")
-            let aLogoURLSplitStrings = aCompleteLogoURL.componentsSeparatedByCharactersInSet(aLogoURLDelimiters)
+            let aLogoURLDelimiters = CharacterSet(charactersIn: "?")
+            let aLogoURLSplitStrings = aCompleteLogoURL.components(separatedBy: aLogoURLDelimiters)
             self.logoURL = aLogoURLSplitStrings[0]
             
-            var i = 0
-            
             for aQuestion in aQuestions {
-                
-                if let aQuestionTags = aQuestion["questionTags"] as? [String] {
-                    
-                    if (aQuestionTags.contains("ios2")) {
-                        
-                        i += 1
-                        
-                        print("Question Number \(i):",aQuestion)
-                        
-                        if (aQuestion["conditionalFilter"]!["filterquestions"] is NSNull || aQuestion["conditionalFilter"]!["filterquestions"]?!.count == 0) {
-                            
-                            let aQuestionDisplayType = aQuestion["displayType"] as! String
-                            let aCCQuestion = CCQuestion()
-                           
-                            aCCQuestion.questionId = aQuestion["id"] as! String
-                            aCCQuestion.name = aQuestion["text"] as! String
-                            aCCQuestion.displayType = aQuestionDisplayType
-                            
-                            if !(aQuestion["leadingDisplayTexts"]! is NSNull) {
-                                aCCQuestion.leadingDisplayText = (aQuestion["leadingDisplayTexts"]! as! [AnyObject])
-                            }
-                            aCCQuestion.sequence = aQuestion["sequence"] as! Int
-                            
-//                            self.questionIDs.append(aQuestion["id"] as! String)
-//                            self.questionTexts.append(aQuestion["text"] as! String)
-//                            self.leadingDisplayTexts.append(aQuestion["leadingDisplayTexts"]! as AnyObject)
-//                            self.questionSequenceNumbers.append(aQuestion["sequence"] as! Int)
-//                            self.questionDisplayTypes.append(aQuestionDisplayType)
-                            
-                            if (aQuestionDisplayType == "Scale") {
+                if let _ = aQuestion["questionTags"] as? [String] {
+                    if let aConditionalFilter = aQuestion["conditionalFilter"] as? [String:Any] {
+                        if let aFilterQuestions = aConditionalFilter["filterquestions"] {
+                            if (aFilterQuestions as AnyObject).count > 0 {
+                                let aQuestionDisplayType = aQuestion["displayType"] as! String
+                                let aCCQuestion = CCQuestion()
                                 
-                                if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
-                                    
-                                    let aMultiSelectDelimiters = NSCharacterSet(charactersInString: "-")
-                                    let aMultiSelectSplitStrings = aMultiSelect[0].componentsSeparatedByCharactersInSet(aMultiSelectDelimiters)
-                                    
-                                    for aMultiSelectSplitString in aMultiSelectSplitStrings {
+                                aCCQuestion.questionId = aQuestion["id"] as! String
+                                aCCQuestion.name = aQuestion["text"] as! String
+                                aCCQuestion.displayType = aQuestionDisplayType
+                                
+                                if !(aQuestion["leadingDisplayTexts"]! is NSNull) {
+                                    aCCQuestion.leadingDisplayText = (aQuestion["leadingDisplayTexts"]! as! [AnyObject])
+                                }
+                                aCCQuestion.sequence = aQuestion["sequence"] as! Int
+                                
+                                if (aQuestionDisplayType == "Scale") {
+                                    if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
                                         
-                                        let aDelimiters = NSCharacterSet(charactersInString: ";")
-                                        let aSplitStrings = aMultiSelectSplitString.componentsSeparatedByCharactersInSet(aDelimiters)
+                                        let aMultiSelectDelimiters = CharacterSet(charactersIn: "-")
+                                        let aMultiSelectSplitStrings = aMultiSelect[0].components(separatedBy: aMultiSelectDelimiters)
                                         
-                                        
-                                        aCCQuestion.ratingTexts.append(aSplitStrings[1])
-//                                        self.ratingTexts.append(aSplitStrings[1])
-                                        
+                                        for aMultiSelectSplitString in aMultiSelectSplitStrings {
+                                            
+                                            let aDelimiters = CharacterSet(charactersIn: ";")
+                                            let aSplitStrings = aMultiSelectSplitString.components(separatedBy: aDelimiters)
+                                            
+                                            
+                                            aCCQuestion.ratingTexts.append(aSplitStrings[1])
+                                            
+                                        }
                                     }
-                                    
                                 }
                                 
-                            }
-                            
-                            
-                            if (aQuestionDisplayType == "Select") {
                                 
-                                if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
-                                    
-                                    aCCQuestion.singleSelectOption = aMultiSelect
-                                    
-//                                    self.singleSelectOptions = aMultiSelect
-                                    
+                                if (aQuestionDisplayType == "Select") {
+                                    if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
+                                        aCCQuestion.singleSelectOption = aMultiSelect
+                                    }
                                 }
                                 
-                            }
-                            
-                            if (aQuestionDisplayType == "MultiSelect") {
-                                
-                                if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
-                                    
-                                    aCCQuestion.multiSelectOption = aMultiSelect
-//                                    self.multiSelectOptions = aMultiSelect
-                                    
+                                if (aQuestionDisplayType == "MultiSelect") {
+                                    if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
+                                        aCCQuestion.multiSelectOption = aMultiSelect
+                                    }
                                 }
                                 
+                                surveyQuestions.append(aCCQuestion)
+                            } else {
+                                filteredQuestions.append(aQuestion)
                             }
-                            
-                            surveyQuestions.append(aCCQuestion)
-                            
-                        } else {
-                            print("Filter Aaya!")
-                            filteredQuestions.append(aQuestion)
                         }
-                        
                     }
                     
                 }
@@ -419,16 +365,13 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             surveyQuestions.append(aQuestion)
             
-//            self.questionTexts.append("")
-//            self.questionDisplayTypes.append("End")
+            let aLogoDownloadGroup = DispatchGroup()
+            aLogoDownloadGroup.enter()
             
-            let aLogoDownloadGroup = dispatch_group_create()
-            dispatch_group_enter(aLogoDownloadGroup)
+            self.logoImage = UIImage(data: try! Data(contentsOf: URL(string: logoURL)!))!
             
-            self.logoImage = UIImage(data: NSData(contentsOfURL: NSURL(string: logoURL)!)!)!
-            
-            dispatch_group_leave(aLogoDownloadGroup)
-            dispatch_group_wait(aLogoDownloadGroup, DISPATCH_TIME_FOREVER)
+            aLogoDownloadGroup.leave()
+            aLogoDownloadGroup.wait(timeout: DispatchTime.distantFuture)
             
             self.startSurvey()
             
@@ -458,7 +401,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         faciliationTextLabel = UILabel(frame: CGRect(x: 0, y: 10, width: surveyView.frame.width, height: 20))
         faciliationTextLabel.font = HELVETICA_NEUE(18)
         faciliationTextLabel.numberOfLines = 2
-        faciliationTextLabel.textAlignment = .Center
+        faciliationTextLabel.textAlignment = .center
         faciliationTextLabel.text = self.welcomeText
         
         surveyView.addSubview(faciliationTextLabel)
@@ -474,10 +417,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         primaryButton = UIButton(frame: CGRect(x: aPrimaryButtonXAlign, y: aPrimaryButtonYAlign, width: aPrimaryButtonWidth, height: 50))
         primaryButton.backgroundColor = UIColor(red: 213/255, green: 25/255, blue: 44/255, alpha: 1.0)
-        primaryButton.setTitle("CONTINUE", forState: .Normal)
+        primaryButton.setTitle("CONTINUE", for: UIControlState())
         primaryButton.titleLabel?.font = HELVETICA_NEUE(12)
-        primaryButton.setTitleColor(.whiteColor(), forState: .Normal)
-        primaryButton.addTarget(self, action: #selector(CCSurveyViewController.primaryButtonTapped), forControlEvents: .TouchUpInside)
+        primaryButton.setTitleColor(.white, for: UIControlState())
+        primaryButton.addTarget(self, action: #selector(CCSurveyViewController.primaryButtonTapped), for: .touchUpInside)
         
         surveyView.addSubview(primaryButton)
         
@@ -488,7 +431,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         footerLabel = UILabel(frame: CGRect(x: 0, y: surveyView.frame.size.height - 50, width: surveyView.frame.width, height: 20))
         footerLabel.font = HELVETICA_NEUE(11)
         footerLabel.text = "Customer Delight powered by"
-        footerLabel.textAlignment = .Center
+        footerLabel.textAlignment = .center
         
         surveyView.addSubview(footerLabel)
         
@@ -496,12 +439,12 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         // Setting up CloudCherry Logo
         
         
-        let aLogoImage = UIImage(named: "CCLogo", inBundle: NSBundle(forClass: self.dynamicType), compatibleWithTraitCollection: nil)
+        let aLogoImage = UIImage(named: "CCLogo", in: Bundle(for: type(of: self)), compatibleWith: nil)
         let aLogoImageWidth = (aLogoImage?.size.width)! - 10
         let aLogoImageHeight = (aLogoImage?.size.height)! - 10
         
         cloudCherryLogoImageView = UIImageView(frame: CGRect(x: (surveyView.frame.width - aLogoImageWidth) / 2, y: surveyView.frame.height - 30, width: aLogoImageWidth, height: aLogoImageHeight))
-        cloudCherryLogoImageView.contentMode = .ScaleAspectFit
+        cloudCherryLogoImageView.contentMode = .scaleAspectFit
         cloudCherryLogoImageView.image = aLogoImage
         
         surveyView.addSubview(cloudCherryLogoImageView)
@@ -512,7 +455,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // MARK: - FloatRatingViewDelegate Method
     
     
-    func floatRatingView(ratingView: FloatRatingView, didUpdate rating: Float) {
+    func floatRatingView(_ ratingView: FloatRatingView, didUpdate rating: Float) {
         
         print("Star Rating: \(Int(self.starRatingView.rating))")
         
@@ -534,10 +477,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         if (primaryButtonCounter == 1) {
             
-            faciliationTextLabel.hidden = true
-            primaryButton.hidden = true
-            footerLabel.hidden = true
-            cloudCherryLogoImageView.hidden = true
+            faciliationTextLabel.isHidden = true
+            primaryButton.isHidden = true
+            footerLabel.isHidden = true
+            cloudCherryLogoImageView.isHidden = true
             
             
             // Setting up Header View for Survey View
@@ -555,7 +498,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             headerLabel = UILabel(frame: CGRect(x: 10, y: 15, width: headerView.frame.width - 20, height: 20))
             headerLabel.adjustsFontSizeToFitWidth = true
             headerLabel.font = HELVETICA_NEUE(15)
-            headerLabel.textColor = UIColor.whiteColor()
+            headerLabel.textColor = UIColor.white
             headerView.addSubview(headerLabel)
             
             
@@ -584,7 +527,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             questionCtrLabel = questionCounterLabel(frame: CGRect(x: surveyView.frame.width - 60, y: surveyView.frame.height - 70, width: 50, height: 20))
             questionCtrLabel.font = HELVETICA_NEUE(11)
-            questionCtrLabel.textAlignment = .Right
+            questionCtrLabel.textAlignment = .right
             
             surveyView.addSubview(questionCtrLabel)
             
@@ -592,13 +535,13 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             // Setting up Previous Button in Footer View
             
             
-            previousButton = UIButton(type: .Custom)
+            previousButton = UIButton(type: .custom)
             previousButton.frame = CGRect(x: 10, y: 5, width: 100, height: 40)
-            previousButton.backgroundColor = UIColor.lightGrayColor()
-            previousButton.setTitle("PREVIOUS", forState: .Normal)
-            previousButton.setTitleColor(UIColor.blackColor(), forState: .Normal)
+            previousButton.backgroundColor = UIColor.lightGray
+            previousButton.setTitle("PREVIOUS", for: UIControlState())
+            previousButton.setTitleColor(UIColor.black, for: UIControlState())
             previousButton.titleLabel?.font = HELVETICA_NEUE(12)
-            previousButton.addTarget(self, action: #selector(CCSurveyViewController.previousButtonTapped), forControlEvents: .TouchUpInside)
+            previousButton.addTarget(self, action: #selector(CCSurveyViewController.previousButtonTapped), for: .touchUpInside)
             
             footerView.addSubview(previousButton)
             
@@ -606,13 +549,13 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             // Setting up Next/Submit Button in Footer View
             
             
-            submitButton = UIButton(type: .Custom)
+            submitButton = UIButton(type: .custom)
             submitButton.frame = CGRect(x: surveyView.frame.width - 110, y: 5, width: 100, height: 40)
-            submitButton.backgroundColor = UIColor.lightGrayColor()
-            submitButton.setTitle("NEXT", forState: .Normal)
-            submitButton.setTitleColor(UIColor.blackColor(), forState: .Normal)
+            submitButton.backgroundColor = UIColor.lightGray
+            submitButton.setTitle("NEXT", for: UIControlState())
+            submitButton.setTitleColor(UIColor.black, for: UIControlState())
             submitButton.titleLabel?.font = HELVETICA_NEUE(12)
-            submitButton.addTarget(self, action: #selector(CCSurveyViewController.nextButtonTapped), forControlEvents: .TouchUpInside)
+            submitButton.addTarget(self, action: #selector(CCSurveyViewController.nextButtonTapped), for: .touchUpInside)
             
             footerView.addSubview(submitButton)
             
@@ -620,7 +563,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
         } else {
             
-            self.navigationController?.dismissViewControllerAnimated(true, completion: nil)
+            self.navigationController?.dismiss(animated: true, completion: nil)
             
         }
         
@@ -672,7 +615,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         for aView in self.surveyView.subviews {
             
-            if ((!aView.isKindOfClass(headerFooterView)) && (!aView.isKindOfClass(questionCounterLabel))) {
+            if ((!aView.isKind(of: headerFooterView.self)) && (!aView.isKind(of: questionCounterLabel.self))) {
                 
                 aView.removeFromSuperview()
                 
@@ -693,9 +636,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     
     func showQuestion() {
-        
-        print("here")
-        
         self.removeSubViews()
         
         if (self.questionCounter <= surveyQuestions.count) {   //questionTexts.count
@@ -706,12 +646,12 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         if (self.questionCounter - 1 == 0) {
             
-            previousButton.hidden = true
+            previousButton.isHidden = true
             
         } else {
             
-            previousButton.hidden = false
-            faciliationTextLabel.hidden = true
+            previousButton.isHidden = false
+            faciliationTextLabel.isHidden = true
             
         }
         
@@ -720,32 +660,32 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         let aQuestion = surveyQuestions[self.questionCounter-1]
         
-        headerLabel.text = aQuestion.name                                                  //questionTexts[self.questionCounter - 1]
+        headerLabel.text = aQuestion.name
         
         if !(self.questionCounter - 1 == 0) {
             updateDuration()
         }
+        
         // Conditional Text Filter
         
-        if (aQuestion.displayType != "End") {                                 //(self.questionDisplayTypes[self.questionCounter - 1] != "End")
+        if (aQuestion.displayType != "End") {
             if !(self.questionCounter - 1 == 0) {
                 
                 print("Print Leading Text: ", aQuestion.leadingDisplayText)
                 
-                if aQuestion.leadingDisplayText is [String] {               //leadingDisplayTexts[self.questionCounter - 1]
-                    print("Here3")
-                } else if let aDisplayTexts = aQuestion.leadingDisplayText as? [NSDictionary]{        //leadingDisplayTexts[self.questionCounter - 1]
+                if aQuestion.leadingDisplayText is [String] {
+                    
+                } else if let aDisplayTexts = aQuestion.leadingDisplayText as? [NSDictionary] {
                         print("Casting successful: ", aDisplayTexts)
                         conditionalTextFilter(aDisplayTexts)
                 } else {
-                    print("Here2")
                 }
             }
         }
         
         var isEnd = false
         
-        switch (aQuestion.displayType) {                             //self.questionDisplayTypes[self.questionCounter - 1]
+        switch (aQuestion.displayType) {
             
         case "Scale":
             
@@ -759,14 +699,14 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             for anIndex in 0 ..< 11 {
                 
-                let aRatingButton = UIButton(type: .Custom)
+                let aRatingButton = UIButton(type: .custom)
                 aRatingButton.frame = CGRect(x: ((aButtonWidth * CGFloat(anIndex)) + 5), y: aRatingButtonYAlign, width: aButtonWidth, height: aButtonWidth)
                 aRatingButton.tag = anIndex + 1
-                aRatingButton.setTitleColor(UIColor.whiteColor(), forState: .Normal)
+                aRatingButton.setTitleColor(UIColor.white, for: UIControlState())
                 aRatingButton.backgroundColor = UIColor(red: red[anIndex], green: green[anIndex], blue: blue[anIndex], alpha: 1.0)
-                aRatingButton.setTitle("\(anIndex)", forState: .Normal)
+                aRatingButton.setTitle("\(anIndex)", for: UIControlState())
                 aRatingButton.titleLabel?.font = HELVETICA_NEUE(11)
-                aRatingButton.addTarget(self, action: #selector(CCSurveyViewController.npsRatingButtonTapped(_:)), forControlEvents: .TouchUpInside)
+                aRatingButton.addTarget(self, action: #selector(CCSurveyViewController.npsRatingButtonTapped(_:)), for: .touchUpInside)
                 
                 surveyView.addSubview(aRatingButton)
                 
@@ -782,7 +722,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 
                 let aRatingTwoLabel = UILabel(frame: CGRect(x: surveyView.frame.width - 105, y: (aRatingButtonYAlign + aButtonWidth + 5), width: 100, height: 20))
-                aRatingTwoLabel.textAlignment = .Right
+                aRatingTwoLabel.textAlignment = .right
                 aRatingTwoLabel.text = aQuestion.ratingTexts[1]                                 //ratingTexts[1]
                 aRatingTwoLabel.font = HELVETICA_NEUE(10)
                 
@@ -807,12 +747,12 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 surveyView.addSubview(aColorLineOne)
                 
-                let aColorLineTwo = UIView(frame: CGRect(x: CGRectGetMaxX(aColorLineOne.frame), y: aLineY, width: (aButtonWidth * 2), height: 3))
+                let aColorLineTwo = UIView(frame: CGRect(x: aColorLineOne.frame.maxX, y: aLineY, width: (aButtonWidth * 2), height: 3))
                 aColorLineTwo.backgroundColor = aColorTwo
                 
                 surveyView.addSubview(aColorLineTwo)
                 
-                let aColorLineThree = UIView(frame: CGRect(x: CGRectGetMaxX(aColorLineTwo.frame), y: aLineY, width: (aButtonWidth * 2), height: 3))
+                let aColorLineThree = UIView(frame: CGRect(x: aColorLineTwo.frame.maxX, y: aLineY, width: (aButtonWidth * 2), height: 3))
                 aColorLineThree.backgroundColor = aColorThree
                 
                 surveyView.addSubview(aColorLineThree)
@@ -821,22 +761,22 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 // Default Scale Legend Texts
                 
                 
-                let aColorLineOneLabel = UILabel(frame: CGRect(x: 5, y: CGRectGetMaxY(aColorLineOne.frame), width: aColorLineOne.frame.width, height: 20))
-                aColorLineOneLabel.textAlignment = .Center
+                let aColorLineOneLabel = UILabel(frame: CGRect(x: 5, y: aColorLineOne.frame.maxY, width: aColorLineOne.frame.width, height: 20))
+                aColorLineOneLabel.textAlignment = .center
                 aColorLineOneLabel.font = HELVETICA_NEUE(7)
                 aColorLineOneLabel.text = "Not at all"
                 
                 surveyView.addSubview(aColorLineOneLabel)
                 
-                let aColorLineTwoLabel = UILabel(frame: CGRect(x: CGRectGetMaxX(aColorLineOneLabel.frame), y: CGRectGetMaxY(aColorLineOne.frame), width: aColorLineTwo.frame.width, height: 20))
-                aColorLineTwoLabel.textAlignment = .Center
+                let aColorLineTwoLabel = UILabel(frame: CGRect(x: aColorLineOneLabel.frame.maxX, y: aColorLineOne.frame.maxY, width: aColorLineTwo.frame.width, height: 20))
+                aColorLineTwoLabel.textAlignment = .center
                 aColorLineTwoLabel.font = HELVETICA_NEUE(7)
                 aColorLineTwoLabel.text = "Maybe"
                 
                 surveyView.addSubview(aColorLineTwoLabel)
                 
-                let aColorLineThreeLabel = UILabel(frame: CGRect(x: CGRectGetMaxX(aColorLineTwoLabel.frame), y: CGRectGetMaxY(aColorLineOne.frame), width: aColorLineThree.frame.width, height: 20))
-                aColorLineThreeLabel.textAlignment = .Center
+                let aColorLineThreeLabel = UILabel(frame: CGRect(x: aColorLineTwoLabel.frame.maxX, y: aColorLineOne.frame.maxY, width: aColorLineThree.frame.width, height: 20))
+                aColorLineThreeLabel.textAlignment = .center
                 aColorLineThreeLabel.font = HELVETICA_NEUE(7)
                 aColorLineThreeLabel.text = "YES, for sure!"
                 
@@ -847,10 +787,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         case "MultilineText":
             
             multiLineTextView = UITextView(frame: CGRect(x: 5, y: 100, width: self.surveyView.frame.width - 10, height: self.surveyView.frame.height - 200))
-            multiLineTextView.layer.borderColor = UIColor.blackColor().CGColor
+            multiLineTextView.layer.borderColor = UIColor.black.cgColor
             multiLineTextView.layer.borderWidth = 1.0
-            multiLineTextView.autocorrectionType = .No
-            multiLineTextView.spellCheckingType = .No
+            multiLineTextView.autocorrectionType = .no
+            multiLineTextView.spellCheckingType = .no
             
             surveyView.addSubview(multiLineTextView)
             
@@ -862,8 +802,8 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             starRatingView.delegate = self
             
-            var anEmptyImage = UIImage(named: "StarEmpty", inBundle: NSBundle(forClass: self.dynamicType), compatibleWithTraitCollection: nil)
-            var aFullImage = UIImage(named: "StarFull", inBundle: NSBundle(forClass: self.dynamicType), compatibleWithTraitCollection: nil)
+            var anEmptyImage = UIImage(named: "StarEmpty", in: Bundle(for: type(of: self)), compatibleWith: nil)
+            var aFullImage = UIImage(named: "StarFull", in: Bundle(for: type(of: self)), compatibleWith: nil)
             
             if ((SDKSession.unselectedStarRatingImage != nil) && (SDKSession.selectedStarRatingImage != nil)) {
                 
@@ -874,7 +814,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             starRatingView.emptyImage = anEmptyImage
             starRatingView.fullImage = aFullImage
-            starRatingView.contentMode = UIViewContentMode.ScaleAspectFit
+            starRatingView.contentMode = UIViewContentMode.scaleAspectFit
             
             self.surveyView.addSubview(starRatingView)
             
@@ -884,8 +824,8 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             let aSingleLineTextFieldY: CGFloat = (self.surveyView.frame.height - 40) / 2
             
             singleLineTextField = UITextField(frame: CGRect(x: 5, y: aSingleLineTextFieldY, width: self.surveyView.frame.width - 10, height: 40))
-            singleLineTextField.borderStyle = .Line
-            singleLineTextField.keyboardType = .Default
+            singleLineTextField.borderStyle = .line
+            singleLineTextField.keyboardType = .default
             
             self.surveyView.addSubview(singleLineTextField)
             
@@ -894,8 +834,8 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             let aSingleLineTextFieldY: CGFloat = (self.surveyView.frame.height - 40) / 2
             
             singleLineTextField = UITextField(frame: CGRect(x: 5, y: aSingleLineTextFieldY, width: self.surveyView.frame.width - 10, height: 40))
-            singleLineTextField.borderStyle = .Line
-            singleLineTextField.keyboardType = .NumberPad
+            singleLineTextField.borderStyle = .line
+            singleLineTextField.keyboardType = .numberPad
             
             self.surveyView.addSubview(singleLineTextField)
             
@@ -907,32 +847,32 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             for anIndex in 0 ..< 5 {
                 
-                let aSmileyButton = UIButton(type: .Custom)
+                let aSmileyButton = UIButton(type: .custom)
                 aSmileyButton.frame = CGRect(x: ((aButtonWidth * CGFloat(anIndex)) + 5) + 22, y: aRatingButtonYAlign, width: aButtonWidth, height: 50)
                 aSmileyButton.tag = anIndex + 1
-                aSmileyButton.addTarget(self, action: #selector(CCSurveyViewController.smileRatingButtonTapped(_:)), forControlEvents: .TouchUpInside)
+                aSmileyButton.addTarget(self, action: #selector(CCSurveyViewController.smileRatingButtonTapped(_:)), for: .touchUpInside)
                 
                 if ((SDKSession.unselectedSmileyRatingImages != nil) && (SDKSession.selectedSmileyRatingImages != nil)) {
                     
                     if ((SDKSession.unselectedSmileyRatingImages!.count == 5) && (SDKSession.selectedSmileyRatingImages!.count == 5)) {
                         
-                        aSmileyButton.setImage(SDKSession.unselectedSmileyRatingImages![anIndex], forState: .Normal)
-                        aSmileyButton.imageView?.contentMode = .ScaleAspectFit
+                        aSmileyButton.setImage(SDKSession.unselectedSmileyRatingImages![anIndex], for: UIControlState())
+                        aSmileyButton.imageView?.contentMode = .scaleAspectFit
                         
                     } else {
                         
-                        aSmileyButton.setTitle(self.smileyUnicodes[anIndex], forState: .Normal)
+                        aSmileyButton.setTitle(self.smileyUnicodes[anIndex], for: UIControlState())
                         aSmileyButton.titleLabel?.font = HELVETICA_NEUE(25)
-                        aSmileyButton.layer.borderColor = UIColor.lightGrayColor().CGColor
+                        aSmileyButton.layer.borderColor = UIColor.lightGray.cgColor
                         aSmileyButton.layer.borderWidth = 1.0
                         
                     }
                     
                 } else {
                     
-                    aSmileyButton.setTitle(self.smileyUnicodes[anIndex], forState: .Normal)
+                    aSmileyButton.setTitle(self.smileyUnicodes[anIndex], for: UIControlState())
                     aSmileyButton.titleLabel?.font = HELVETICA_NEUE(25)
-                    aSmileyButton.layer.borderColor = UIColor.lightGrayColor().CGColor
+                    aSmileyButton.layer.borderColor = UIColor.lightGray.cgColor
                     aSmileyButton.layer.borderWidth = 1.0
                     
                 }
@@ -953,11 +893,11 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             questionCtrLabel.removeFromSuperview()
             
-            headerView.hidden = true
-            footerView.hidden = true
-            logoImageView.hidden = true
+            headerView.isHidden = true
+            footerView.isHidden = true
+            logoImageView.isHidden = true
             
-            faciliationTextLabel.hidden = false
+            faciliationTextLabel.isHidden = false
             faciliationTextLabel.frame = CGRect(x: 0, y: 10, width: surveyView.frame.width, height: 20)
             faciliationTextLabel.text = self.thankYouText
             
@@ -965,26 +905,26 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             printAnalytics()
             
-            primaryButton.hidden = false
-            primaryButton.setTitle("CLOSE", forState: .Normal)
+            primaryButton.isHidden = false
+            primaryButton.setTitle("CLOSE", for: UIControlState())
             
             surveyView.addSubview(primaryButton)
             
-            footerLabel.hidden = false
+            footerLabel.isHidden = false
             
             surveyView.addSubview(footerLabel)
             
-            let aLogoImage = UIImage(named: "CCLogo", inBundle: NSBundle(forClass: self.dynamicType), compatibleWithTraitCollection: nil)
+            let aLogoImage = UIImage(named: "CCLogo", in: Bundle(for: type(of: self)), compatibleWith: nil)
             let aLogoImageWidth = (aLogoImage?.size.width)! - 10
             let aLogoImageHeight = (aLogoImage?.size.height)! - 10
             
             cloudCherryLogoImageView = UIImageView(frame: CGRect(x: (surveyView.frame.width - aLogoImageWidth) / 2, y: surveyView.frame.height - 30, width: aLogoImageWidth, height: aLogoImageHeight))
-            cloudCherryLogoImageView.contentMode = .ScaleAspectFit
+            cloudCherryLogoImageView.contentMode = .scaleAspectFit
             cloudCherryLogoImageView.image = aLogoImage
             
             surveyView.addSubview(cloudCherryLogoImageView)
             
-            submitButton.setTitle("FINISH", forState: .Normal)
+            submitButton.setTitle("FINISH", for: UIControlState())
             isEnd = true
             
         default:
@@ -1004,8 +944,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Analytics Functions
     
     func addToAnalytics() {
-        print("Adding")
-        let aDate = NSDate()
+        let aDate = Date()
         let aLastViewedAt = Int(floor(aDate.timeIntervalSince1970 * 1000))
         let aData = CCAnalytics(id: surveyQuestions[self.questionCounter - 1].questionId, name: headerLabel.text!, impression: 1, lastViewedAt: aLastViewedAt)      //questionIDs[self.questionCounter - 1]
         
@@ -1024,7 +963,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             analyticsData.append(aData)
         } else {
             let aData = analyticsData[i]
-            analyticsData.removeAtIndex(i)
+            analyticsData.remove(at: i)
             updateAnalytics(aData)
         }
         
@@ -1032,9 +971,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     }
     
     
-    func updateAnalytics(aData: CCAnalytics) {
+    func updateAnalytics(_ aData: CCAnalytics) {
         
-        let aDate = NSDate()
+        let aDate = Date()
         let aLastViewedAt = Int(floor(aDate.timeIntervalSince1970 * 1000))
         
         aData.name = headerLabel.text!
@@ -1048,7 +987,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     func updateDuration() {
         let aData = analyticsData.last
         
-        let aDate = NSDate()
+        let aDate = Date()
         let aLastViewedAt = Int(floor(aDate.timeIntervalSince1970 * 1000))
         
         aData?.duration += (aLastViewedAt-(aData?.lastViewedAt)!)
@@ -1071,8 +1010,8 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             let aJSON = " { id:\(anAnalyticsData.id), name: \(anAnalyticsData.name), impression:\(anAnalyticsData.impression), duration:\(anAnalyticsData.duration), lastViewedAt:\(anAnalyticsData.lastViewedAt)}"
             print(aJSON)
             
-            let aDictionary = ["id" : anAnalyticsData.id, "name" : anAnalyticsData.name, "impression" : anAnalyticsData.impression, "duration" : anAnalyticsData.duration, "lastViewedAt" : anAnalyticsData.lastViewedAt]
-            _ANALYTICS_DATA.append(aDictionary)
+            let aDictionary = ["id" : anAnalyticsData.id, "name" : anAnalyticsData.name, "impression" : anAnalyticsData.impression, "duration" : anAnalyticsData.duration, "lastViewedAt" : anAnalyticsData.lastViewedAt] as [String : Any]
+            _ANALYTICS_DATA.append(aDictionary as NSDictionary)
         }
         
     }
@@ -1081,7 +1020,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Sets up Single/Multi Select Buttons
     
     
-    func setupOptionButtons(iQuestionDisplayType: String) {
+    func setupOptionButtons(_ iQuestionDisplayType: String) {
         
         var anOptions = [String]()
         var anOptionButtonY = CGFloat(5)
@@ -1116,12 +1055,12 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
             }
             
-            let anOptionButton = UIButton(type: .Custom)
+            let anOptionButton = UIButton(type: .custom)
             anOptionButton.frame = CGRect(x: (self.selectButtonMaxX) + 10, y: anOptionButtonY, width: anOptionButtonWidth, height: 40)
-            anOptionButton.setTitle(anOptions[anIndex], forState: .Normal)
-            anOptionButton.setTitleColor(UIColor.blackColor(), forState: .Normal)
+            anOptionButton.setTitle(anOptions[anIndex], for: UIControlState())
+            anOptionButton.setTitleColor(UIColor.black, for: UIControlState())
             anOptionButton.titleLabel?.font = HELVETICA_NEUE(11)
-            anOptionButton.layer.borderColor = UIColor.lightGrayColor().CGColor
+            anOptionButton.layer.borderColor = UIColor.lightGray.cgColor
             anOptionButton.layer.borderWidth = 1.0
             
             anOptionButton.tag = anIndex + 1
@@ -1134,7 +1073,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             aLastButtonTag = anIndex + 1
             
-            let aButtonMaxX = CGRectGetMaxX(anOptionButton.frame)
+            let aButtonMaxX = anOptionButton.frame.maxX
             let aButtonWidth = anOptionButton.frame.width
             
             var anOptionButtonNewWidth = CGFloat()
@@ -1157,13 +1096,13 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 anOnlyOneLine = false
                 
-                anOptionButtonY = CGRectGetMaxY(anOptionButton.frame) + 10
+                anOptionButtonY = anOptionButton.frame.maxY + 10
                 self.selectButtonMaxX = 0
                 
                 anOptionButton.frame = CGRect(x: (self.selectButtonMaxX) + 10, y: anOptionButtonY, width: anOptionButtonNewWidth, height: 40)
                 
                 let aLastButton = aButtonView.viewWithTag(aLastButtonTag - 1) as! UIButton
-                let aLastButtonMaxX = CGRectGetMaxX(aLastButton.frame)
+                let aLastButtonMaxX = aLastButton.frame.maxX
                 let aRemainingPadding = self.surveyView.frame.width - aLastButtonMaxX
                 var aNewButtonX = (aRemainingPadding / 2) + 5
                 
@@ -1171,7 +1110,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                     
                     let aButton = aButtonView.viewWithTag(anIndex) as! UIButton
                     
-                    aButton.frame = CGRect(x: aNewButtonX, y: CGRectGetMinY(aButton.frame), width: aButton.frame.width, height: 40)
+                    aButton.frame = CGRect(x: aNewButtonX, y: aButton.frame.minY, width: aButton.frame.width, height: 40)
                     
                     if (SDKSession.customTextStyle == .CC_CIRCLE) {
                         
@@ -1181,7 +1120,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                         
                     }
                     
-                    aNewButtonX = CGRectGetMaxX(aButton.frame) + 10
+                    aNewButtonX = aButton.frame.maxX + 10
                     
                     
                 }
@@ -1192,16 +1131,16 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
             }
             
-            self.selectButtonMaxX = CGRectGetMaxX(anOptionButton.frame)
-            self.selectButtonMaxY = CGRectGetMaxY(anOptionButton.frame)
+            self.selectButtonMaxX = anOptionButton.frame.maxX
+            self.selectButtonMaxY = anOptionButton.frame.maxY
             
             if (iQuestionDisplayType == "MultiSelect") {
                 
-                anOptionButton.addTarget(self, action: #selector(CCSurveyViewController.multiSelectButtonTapped(_:)), forControlEvents: .TouchUpInside)
+                anOptionButton.addTarget(self, action: #selector(CCSurveyViewController.multiSelectButtonTapped(_:)), for: .touchUpInside)
                 
             } else {
                 
-                anOptionButton.addTarget(self, action: #selector(CCSurveyViewController.singleSelectButtonTapped(_:)), forControlEvents: .TouchUpInside)
+                anOptionButton.addTarget(self, action: #selector(CCSurveyViewController.singleSelectButtonTapped(_:)), for: .touchUpInside)
                 
             }
             
@@ -1217,7 +1156,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         if (anOnlyOneLine) {
             
             let aLastButton = self.surveyView.viewWithTag(aLastButtonTag) as! UIButton
-            let aLastButtonMaxX = CGRectGetMaxX(aLastButton.frame)
+            let aLastButtonMaxX = aLastButton.frame.maxX
             let aRemainingPadding = self.surveyView.frame.width - aLastButtonMaxX
             var aNewButtonX = (aRemainingPadding / 2) + 5
             
@@ -1225,8 +1164,8 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 let aButton = self.view.viewWithTag(anIndex) as! UIButton
                 
-                aButton.frame = CGRect(x: aNewButtonX, y: CGRectGetMinY(aButton.frame), width: aButton.frame.width, height: 40)
-                aNewButtonX = CGRectGetMaxX(aButton.frame) + 10
+                aButton.frame = CGRect(x: aNewButtonX, y: aButton.frame.minY, width: aButton.frame.width, height: 40)
+                aNewButtonX = aButton.frame.maxX + 10
                 
                 if (SDKSession.customTextStyle == .CC_CIRCLE) {
                     
@@ -1248,7 +1187,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     func submitResponse() {
         
-        let aRequest = NSMutableURLRequest(URL: NSURL(string: "\(BASE_URL)\(POST_ANSWER_PARTIAL)")!)
+        let aRequest = NSMutableURLRequest(url: URL(string: "\(BASE_URL)\(POST_ANSWER_PARTIAL)")!)
         
         var aSurveyResponse = Dictionary<String, AnyObject>()
         var aSurveyResponseArray: Array<AnyObject> = []
@@ -1266,7 +1205,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: selectedNPSRating, iTextResponse: [""],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["numberInput" : selectedNPSRating, "questionId" :surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
+                aSurveyResponse = ["numberInput" : selectedNPSRating as AnyObject, "questionId" :surveyQuestions[anIndex].questionId as AnyObject, "questionText" : surveyQuestions[anIndex].name as AnyObject]
                 
             }
             
@@ -1280,9 +1219,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 let aResponseText = multiLineTextView.text
                 
-                storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: -1, iTextResponse: [aResponseText],iDidRespond: aCurrentQuestionAnswered)
+                storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: -1, iTextResponse: [aResponseText!],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["textInput" : aResponseText, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
+                aSurveyResponse = ["textInput" : aResponseText as AnyObject, "questionId" : surveyQuestions[anIndex].questionId as AnyObject, "questionText" : surveyQuestions[anIndex].name as AnyObject]
                 
             }
             
@@ -1296,7 +1235,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: selectedNPSRating, iTextResponse: [""],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["numberInput" : selectedNPSRating, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
+                aSurveyResponse = ["numberInput" : selectedNPSRating as AnyObject, "questionId" : surveyQuestions[anIndex].questionId as AnyObject, "questionText" : surveyQuestions[anIndex].name as AnyObject]
                 
             }
             
@@ -1310,7 +1249,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: -1, iTextResponse: [singleLineTextField.text!],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["textInput" : singleLineTextField.text!, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
+                aSurveyResponse = ["textInput" : singleLineTextField.text! as AnyObject, "questionId" : surveyQuestions[anIndex].questionId as AnyObject, "questionText" : surveyQuestions[anIndex].name as AnyObject]
                 
                 singleLineTextField.text = ""
                 
@@ -1326,7 +1265,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: -1, iTextResponse: [singleLineTextField.text!],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["textInput" : singleLineTextField.text!, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
+                aSurveyResponse = ["textInput" : singleLineTextField.text! as AnyObject, "questionId" : surveyQuestions[anIndex].questionId as AnyObject, "questionText" : surveyQuestions[anIndex].name as AnyObject]
                 
                 singleLineTextField.text = ""
                 
@@ -1342,7 +1281,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: selectedSmileRating, iTextResponse: [""],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["numberInput" : selectedSmileRating, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
+                aSurveyResponse = ["numberInput" : selectedSmileRating as AnyObject, "questionId" : surveyQuestions[anIndex].questionId as AnyObject, "questionText" : surveyQuestions[anIndex].name as AnyObject]
                 
             }
             
@@ -1372,7 +1311,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                     
                 }
                 
-                aSurveyResponse = ["textInput" : selectedMultiOptionsString, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
+                aSurveyResponse = ["textInput" : selectedMultiOptionsString as AnyObject, "questionId" : surveyQuestions[anIndex].questionId as AnyObject, "questionText" : surveyQuestions[anIndex].name as AnyObject]
                 
             }
             
@@ -1386,7 +1325,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 storeResponse(surveyQuestions[anIndex].questionId, iQuestionType: surveyQuestions[anIndex].displayType, iNumberResponse: -1, iTextResponse: [selectedSingleSelectOption],iDidRespond: aCurrentQuestionAnswered)
                 
-                aSurveyResponse = ["textInput" : selectedSingleSelectOption, "questionId" : surveyQuestions[anIndex].questionId, "questionText" : surveyQuestions[anIndex].name]
+                aSurveyResponse = ["textInput" : selectedSingleSelectOption as AnyObject, "questionId" : surveyQuestions[anIndex].questionId as AnyObject, "questionText" : surveyQuestions[anIndex].name as AnyObject]
                 
             }
             
@@ -1402,7 +1341,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 for (aKey, aValue) in SDKSession.prefillDictionary! {
                     
-                    aSurveyResponse["\(aKey)"] = "\(aValue)"
+                    aSurveyResponse["\(aKey)"] = "\(aValue)" as AnyObject
                     
                 }
                 
@@ -1410,22 +1349,22 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
         }
         
-        aSurveyResponseArray.append(aSurveyResponse)
+        aSurveyResponseArray.append(aSurveyResponse as AnyObject)
         
-        let aJsonData: NSData =  try! NSJSONSerialization.dataWithJSONObject(aSurveyResponseArray, options: NSJSONWritingOptions.PrettyPrinted)
-        let aJsonString: String = String(data: aJsonData, encoding: NSUTF8StringEncoding)!
+        let aJsonData: Data =  try! JSONSerialization.data(withJSONObject: aSurveyResponseArray, options: JSONSerialization.WritingOptions.prettyPrinted)
+        let aJsonString: String = String(data: aJsonData, encoding: String.Encoding.utf8)!
         
         print(aJsonString)
         
-        let aPostData = NSMutableData(data: aJsonString.dataUsingEncoding(NSUTF8StringEncoding)!)
+        let aPostData = NSData(data: aJsonString.data(using: String.Encoding.utf8)!) as Data
         
-        aRequest.HTTPMethod = "POST"
+        aRequest.httpMethod = "POST"
         aRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        aRequest.HTTPBody = aPostData
+        aRequest.httpBody = aPostData
         
-        let aTaskOne = NSURLSession.sharedSession().dataTaskWithRequest(aRequest) { (aData, aResponse, anError) in
+        let aTaskOne = URLSession.shared.dataTask(with: (aRequest as URLRequest), completionHandler: { (aData, aResponse, anError) in
             
-            if let aHttpResponse = aResponse as? NSHTTPURLResponse {
+            if let aHttpResponse = aResponse as? HTTPURLResponse {
                 
                 let aResponseStatusCode = aHttpResponse.statusCode
                 
@@ -1443,7 +1382,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
             }
             
-        }
+        }) 
         
         aTaskOne.resume()
         
@@ -1458,7 +1397,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Store the responses of the user
     
     
-    func storeResponse(iQuestionID:String, iQuestionType:String, iNumberResponse:Int, iTextResponse:[String], iDidRespond:Bool) {
+    func storeResponse(_ iQuestionID:String, iQuestionType:String, iNumberResponse:Int, iTextResponse:[String], iDidRespond:Bool) {
         
         if iDidRespond {
             
@@ -1474,7 +1413,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             for someResponse in questionsAnswered {
                 
                 if someResponse.questionID == iQuestionID {
-                    questionsAnswered.removeAtIndex(aFlag)
+                    questionsAnswered.remove(at: aFlag)
                 }
                 aFlag+=1
             }
@@ -1487,13 +1426,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Conditional Question Text Filter
     
     
-    func conditionalTextFilter(iLeadingDisplayTextOptions:[NSDictionary]) {
-        
-        print("COnditionl filter")
-        
+    func conditionalTextFilter(_ iLeadingDisplayTextOptions:[NSDictionary]) {
         for aLeadingDisplayTextOption in iLeadingDisplayTextOptions {
             
-            if let aFilterQuestions = aLeadingDisplayTextOption["filter"]!["filterquestions"] {
+            if let aFilterQuestions = (aLeadingDisplayTextOption["filter"] as? [String:Any])!["filterquestions"] {
                 
                 let aFilterQuestions = aFilterQuestions as! [NSDictionary]
                 
@@ -1505,7 +1441,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                     print(aFilterQuestion)
                     
                     if isAnd(aFilterQuestion) {
-                        print("isand satisfied")
                         if (conditionCheck(aFilterQuestion) && !didFail) {
                             
                             didSatisfy = true
@@ -1530,12 +1465,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 }
                 
                 if didSatisfy && !didFail {
-                    print("Are we here?")
                     headerLabel.text = aLeadingDisplayTextOption["text"] as? String
                 }
                 
             } else {
-                print("No filter or filterquestions")
             }
         }
     }
@@ -1544,7 +1477,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Conditional Flow Filter
     
     
-    func conditionalFlowFilter(iQuestionId:String) {
+    func conditionalFlowFilter(_ iQuestionId:String) {
         
         var anAddedCount = 0
         var aRemovedCount = 0
@@ -1553,7 +1486,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             for aConditionalQuestion in filteredQuestions {
                 
-                if let aConditionalFilter = aConditionalQuestion["conditionalFilter"] {
+                if let aConditionalFilter = aConditionalQuestion["conditionalFilter"] as? [String:Any] {
                     
                     var didSatisfy = false
                     var didFail = false
@@ -1562,7 +1495,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                     for aFilterByQuestion in aFilterByQuestions {
                         print(aFilterByQuestion)
                         if isAnd(aFilterByQuestion) {
-                            print("isand satisfied")
                             if (conditionCheck(aFilterByQuestion) && !didFail) {
                                 didSatisfy = true
                             } else {
@@ -1592,7 +1524,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                         }
                         
                         if !aFlag {
-                            addToQuestions(aConditionalQuestion)    // REWRITE
+                            addToQuestions(aConditionalQuestion)
                             anAddedCount+=1
                         }
                         
@@ -1618,12 +1550,11 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         }
         
         if anAddedCount > 0 || aRemovedCount > 0 {
-            print("Added/Removed a Question by conditional flow. YOu have to add a lot here  ")
         }
     }
     
     
-    func addToQuestions(aQuestion:NSDictionary) {
+    func addToQuestions(_ aQuestion:NSDictionary) {
         
         let aQuestionDisplayType = aQuestion["displayType"] as! String
         let aCCQuestion = CCQuestion()
@@ -1642,17 +1573,16 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
                 
-                let aMultiSelectDelimiters = NSCharacterSet(charactersInString: "-")
-                let aMultiSelectSplitStrings = aMultiSelect[0].componentsSeparatedByCharactersInSet(aMultiSelectDelimiters)
+                let aMultiSelectDelimiters = CharacterSet(charactersIn: "-")
+                let aMultiSelectSplitStrings = aMultiSelect[0].components(separatedBy: aMultiSelectDelimiters)
                 
                 for aMultiSelectSplitString in aMultiSelectSplitStrings {
                     
-                    let aDelimiters = NSCharacterSet(charactersInString: ";")
-                    let aSplitStrings = aMultiSelectSplitString.componentsSeparatedByCharactersInSet(aDelimiters)
+                    let aDelimiters = CharacterSet(charactersIn: ";")
+                    let aSplitStrings = aMultiSelectSplitString.components(separatedBy: aDelimiters)
                     
                     
                     aCCQuestion.ratingTexts.append(aSplitStrings[1])
-                    //                                        self.ratingTexts.append(aSplitStrings[1])
                     
                 }
                 
@@ -1666,8 +1596,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             if let aMultiSelect = aQuestion["multiSelect"] as? [String] {
                 
                 aCCQuestion.singleSelectOption = aMultiSelect
-                
-                //                                    self.singleSelectOptions = aMultiSelect
                 
             }
             
@@ -1689,15 +1617,14 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
 
     
     func sortSurveyQuestions() {
-        print("Sorting")
-        surveyQuestions = surveyQuestions.sort( { $0.sequence < $1.sequence })
+        surveyQuestions = surveyQuestions.sorted( by: { $0.sequence < $1.sequence })
         for aQuestion in surveyQuestions {
             print(aQuestion.sequence)
         }
     }
     
     
-    func removeFromQuestions(iQuestionId:String) {
+    func removeFromQuestions(_ iQuestionId:String) {
         //RemoveFromQuestion, analytics and stored Responses
     }
     
@@ -1705,18 +1632,10 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // If groupBy is AND (By Default or if Specified)
     
     
-    func isAnd(iFilterQuestion:NSDictionary) -> Bool {
-        
-        print("IS AND",iFilterQuestion["groupBy"])
-        
+    func isAnd(_ iFilterQuestion:NSDictionary) -> Bool {
         if iFilterQuestion["groupBy"] as? String == "AND" || iFilterQuestion["groupBy"] is NSNull {
-            print("Returning")
             return true
-            
         } else {
-            
-            print("ReturningF")
-
             return false
         }
     }
@@ -1725,29 +1644,19 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // If groupBy is OR (Explicit)
     
     
-    func isOr(iFilterQuestion:NSDictionary) -> Bool {
-       
-        print("IS OR",iFilterQuestion["groupBy"])
-
+    func isOr(_ iFilterQuestion:NSDictionary) -> Bool {
         if iFilterQuestion["groupBy"] as? String == "OR" {
-            print("Returning")
-
             return true
-            
         } else {
-            print("ReturningF")
-
             return false
         }
     }
     
     
-    func isANumberCondition(iFilterQuestion:NSDictionary) -> Bool {
-        print("Check if number", iFilterQuestion["answerCheck"])
+    func isANumberCondition(_ iFilterQuestion:NSDictionary) -> Bool {
         if let aCondition = iFilterQuestion["answerCheck"] as? [String] {
             let aCondition = aCondition[0]
-            if(aCondition.lowercaseString == "gt" || aCondition.lowercaseString == "lt" || aCondition.lowercaseString == "eq") {
-                print("Returning")
+            if(aCondition.lowercased() == "gt" || aCondition.lowercased() == "lt" || aCondition.lowercased() == "eq") {
                 return true
             }
             return false
@@ -1760,43 +1669,31 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     //Conditional Text Check
     
     
-    func conditionCheck(iFilterQuestion:NSDictionary) -> Bool {
-        print("Checking condition")
+    func conditionCheck(_ iFilterQuestion:NSDictionary) -> Bool {
         if isANumberCondition(iFilterQuestion) {
-            
             if let kConditions = iFilterQuestion["answerCheck"] as? [String] {
-        
                 let aCondition = kConditions[0]
                 let aQuestionId = iFilterQuestion["questionId"] as! String
                 
                 if intAnswerForQuestionWithID(aQuestionId) != nil {
-                    
                     let anAnswer = intAnswerForQuestionWithID(aQuestionId)
                     let aNumber = iFilterQuestion["number"] as! Int
-                    print("Answer: \(anAnswer) number: \(aNumber)")
-                    if aCondition.lowercaseString == "lt" {
+                    
+                    if aCondition.lowercased() == "lt" {
                         
                         if aNumber > anAnswer {
                             return true
                         }
                         
-                    } else if aCondition.lowercaseString == "gt" {
-                        
-                        print("here")
-                        
+                    } else if aCondition.lowercased() == "gt" {
                         if aNumber < anAnswer {
-                            
-                            print("here1")
-                            
                             return true
                         }
                         
-                    } else if aCondition.lowercaseString == "eq" {
-                        
+                    } else if aCondition.lowercased() == "eq" {
                         if aNumber == anAnswer {
                             return true
                         }
-                        
                     } else {
                         return false
                     }
@@ -1844,7 +1741,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Return Int Answers
     
     
-    func intAnswerForQuestionWithID(iQuestionID:String) -> Int? {
+    func intAnswerForQuestionWithID(_ iQuestionID:String) -> Int? {
         
         for aQuestionAnswered in questionsAnswered {
             
@@ -1856,7 +1753,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     }
     
     
-    func isQuestionAnswered(iQuestionID:String) -> Bool {
+    func isQuestionAnswered(_ iQuestionID:String) -> Bool {
         
         for aQuestionAnswered in questionsAnswered {
             
@@ -1873,7 +1770,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Return String Answers
     
     
-    func stringAnswerForQuestionWithID(iQuestionID:String) -> [String]? {
+    func stringAnswerForQuestionWithID(_ iQuestionID:String) -> [String]? {
         
         for aQuestionAnswered in questionsAnswered {
             
@@ -1889,20 +1786,20 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Converts HEX color string to RGB (HEX received from API response)
     
     
-    func hexStringToUIColor(iHexColorCodeString:String) -> UIColor {
+    func hexStringToUIColor(_ iHexColorCodeString:String) -> UIColor {
         
-        var aColorCodeString:String = iHexColorCodeString.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet() as NSCharacterSet).uppercaseString
+        var aColorCodeString:String = iHexColorCodeString.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).uppercased()
         
         if (aColorCodeString.hasPrefix("#")) {
-            aColorCodeString = aColorCodeString.substringFromIndex(aColorCodeString.startIndex.advancedBy(1))
+            aColorCodeString = aColorCodeString.substring(from: aColorCodeString.characters.index(aColorCodeString.startIndex, offsetBy: 1))
         }
         
         if ((aColorCodeString.characters.count) != 6) {
-            return UIColor.grayColor()
+            return UIColor.gray
         }
         
         var aRGBValue:UInt32 = 0
-        NSScanner(string: aColorCodeString).scanHexInt(&aRGBValue)
+        Scanner(string: aColorCodeString).scanHexInt32(&aRGBValue)
         
         return UIColor(
             red: CGFloat((aRGBValue & 0xFF0000) >> 16) / 255.0,
@@ -1917,7 +1814,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Handles NPS Survey button taps
     
     
-    func npsRatingButtonTapped(iButton: UIButton) {
+    func npsRatingButtonTapped(_ iButton: UIButton) {
         
         if let aTappedNPSButton = self.view.viewWithTag(iButton.tag) as? UIButton {
             
@@ -1927,15 +1824,15 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
             if (anIndex != -1) {
                 
-                tappedButton.setTitleColor(UIColor.whiteColor(), forState: .Normal)
+                tappedButton.setTitleColor(UIColor.white, for: UIControlState())
                 tappedButton.backgroundColor = UIColor(red: red[anIndex], green: green[anIndex], blue: blue[anIndex], alpha: 1.0)
-                tappedButton.layer.borderColor = UIColor.clearColor().CGColor
+                tappedButton.layer.borderColor = UIColor.clear.cgColor
                 
             }
             
-            aTappedNPSButton.setTitleColor(UIColor.blackColor(), forState: .Normal)
-            aTappedNPSButton.backgroundColor = UIColor.lightGrayColor()
-            aTappedNPSButton.layer.borderColor = UIColor.blackColor().CGColor
+            aTappedNPSButton.setTitleColor(UIColor.black, for: UIControlState())
+            aTappedNPSButton.backgroundColor = UIColor.lightGray
+            aTappedNPSButton.layer.borderColor = UIColor.black.cgColor
             aTappedNPSButton.layer.borderWidth = 1.0
             
             tappedButton = aTappedNPSButton
@@ -1950,7 +1847,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Handles Smile Rating button taps
     
     
-    func smileRatingButtonTapped(iButton: UIButton) {
+    func smileRatingButtonTapped(_ iButton: UIButton) {
         
         if let aTappedSmileButton = self.view.viewWithTag(iButton.tag) as? UIButton {
             
@@ -1964,21 +1861,21 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                     
                     if (anIndex != -1) {
                         
-                        tappedButton.setImage(SDKSession.unselectedSmileyRatingImages![anIndex], forState: .Normal)
+                        tappedButton.setImage(SDKSession.unselectedSmileyRatingImages![anIndex], for: UIControlState())
                         
                     }
                     
-                    aTappedSmileButton.setImage(SDKSession.selectedSmileyRatingImages![iButton.tag - 1], forState: .Normal)
+                    aTappedSmileButton.setImage(SDKSession.selectedSmileyRatingImages![iButton.tag - 1], for: UIControlState())
                     
                 } else {
                     
                     if (anIndex != -1) {
                         
-                        tappedButton.backgroundColor = UIColor.clearColor()
+                        tappedButton.backgroundColor = UIColor.clear
                         
                     }
                     
-                    aTappedSmileButton.backgroundColor = UIColor.lightGrayColor()
+                    aTappedSmileButton.backgroundColor = UIColor.lightGray
                     
                 }
                 
@@ -1986,11 +1883,11 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
                 
                 if (anIndex != -1) {
                     
-                    tappedButton.backgroundColor = UIColor.clearColor()
+                    tappedButton.backgroundColor = UIColor.clear
                     
                 }
                 
-                aTappedSmileButton.backgroundColor = UIColor.lightGrayColor()
+                aTappedSmileButton.backgroundColor = UIColor.lightGray
                 
             }
             
@@ -2006,11 +1903,11 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Handles Single Select button taps
     
     
-    func singleSelectButtonTapped(iButton: UIButton) {
+    func singleSelectButtonTapped(_ iButton: UIButton) {
         
         if let aTappedButton = self.view.viewWithTag(iButton.tag) as? UIButton {
             
-            tappedButton.backgroundColor = UIColor.whiteColor()
+            tappedButton.backgroundColor = UIColor.white
             tappedButton = iButton
             
             aTappedButton.backgroundColor = UIColor(red: 242/255, green: 219/255, blue: 29/255, alpha: 1.0)
@@ -2025,7 +1922,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // Handles Multi Select button taps
     
     
-    func multiSelectButtonTapped(iButton: UIButton) {
+    func multiSelectButtonTapped(_ iButton: UIButton) {
         
         if let aTappedButton = self.view.viewWithTag(iButton.tag) as? UIButton {
             
@@ -2034,7 +1931,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             if (self.selectedMultiSelectOptions.contains(aSelectedButtonTitle)) {
                 
                 self.removeSelectedString(&self.selectedMultiSelectOptions, iStringToRemove: aSelectedButtonTitle)
-                aTappedButton.backgroundColor = UIColor.whiteColor()
+                aTappedButton.backgroundColor = UIColor.white
                 print(self.selectedMultiSelectOptions)
                 
             } else {
@@ -2050,7 +1947,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     }
     
     
-    func removeSelectedString (inout iFromArray: [String], iStringToRemove: String){
+    func removeSelectedString (_ iFromArray: inout [String], iStringToRemove: String){
         
         iFromArray = iFromArray.filter{$0 != iStringToRemove}
         
