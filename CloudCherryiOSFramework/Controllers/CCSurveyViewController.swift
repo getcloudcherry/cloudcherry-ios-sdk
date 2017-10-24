@@ -71,7 +71,7 @@ public enum SurveyExitedAt {
 }
 
 protocol CCSurveyDelegate {
-    func surveyExited(withStatus iStatus: SurveyExitedAt)
+    func surveyExited(withStatus iStatus: SurveyExitedAt, andSurveyToken iSurveyToken: String)
 }
 
 class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
@@ -574,7 +574,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         } else {
             
             self.navigationController?.dismiss(animated: true, completion: {
-                self.surveyDelegate?.surveyExited(withStatus: SurveyExitedAt.COMPLETION)
+                self.surveyDelegate?.surveyExited(withStatus: SurveyExitedAt.COMPLETION, andSurveyToken: SDKSession.surveyToken)
             })
             
         }

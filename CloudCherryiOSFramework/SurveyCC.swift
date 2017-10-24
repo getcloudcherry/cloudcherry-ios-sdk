@@ -12,7 +12,7 @@ import UIKit
 var _ANALYTICS_DATA = [NSDictionary]()
 
 public protocol SurveyCCDelegate {
-    func surveyExited(withStatus iStatus: SurveyExitedAt)
+    func surveyExited(withStatus iStatus: SurveyExitedAt, andSurveyToken iSurveyToken: String)
 }
 
 open class SurveyCC: NSObject, CCSurveyDelegate {
@@ -366,8 +366,8 @@ open class SurveyCC: NSObject, CCSurveyDelegate {
     // MARK: - CCSurveyDelegate Method
     
     
-    func surveyExited(withStatus iStatus: SurveyExitedAt) {
-        self.surveyDelegate?.surveyExited(withStatus: iStatus)
+    func surveyExited(withStatus iStatus: SurveyExitedAt, andSurveyToken iSurveyToken: String) {
+        self.surveyDelegate?.surveyExited(withStatus: iStatus, andSurveyToken: iSurveyToken)
     }
 
 }
