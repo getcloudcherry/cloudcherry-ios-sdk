@@ -7,4 +7,5 @@ framework module CloudCherryiOSFramework {
 
 module CloudCherryiOSFramework.Swift {
     header "CloudCherryiOSFramework-Swift.h"
+    requires objc
 }

@@ -64,13 +64,23 @@ class questionCounterLabel : UILabel {
     
 }
 
+public enum SurveyExitedAt {
+    case WELCOME_SCREEN
+    case PARTIAL_COMPLETION
+    case COMPLETION
+}
 
+protocol CCSurveyDelegate {
+    func surveyExited(withStatus iStatus: SurveyExitedAt, andSurveyToken iSurveyToken: String)
+}
 
 class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
     
     // MARK: - Variables
     
+    
+    var surveyDelegate: CCSurveyDelegate?
     
     var keyboardAppeared = false
     var yOffset: CGFloat = 0
@@ -563,7 +573,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
         } else {
             
-            self.navigationController?.dismiss(animated: true, completion: nil)
+            self.navigationController?.dismiss(animated: true, completion: {
+                self.surveyDelegate?.surveyExited(withStatus: SurveyExitedAt.COMPLETION, andSurveyToken: SDKSession.surveyToken)
+            })
             
         }
         
@@ -670,9 +682,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         if (aQuestion.displayType != "End") {
             if !(self.questionCounter - 1 == 0) {
-                
-                print("Print Leading Text: ", aQuestion.leadingDisplayText)
-                
                 if aQuestion.leadingDisplayText is [String] {
                     
                 } else if let aDisplayTexts = aQuestion.leadingDisplayText as? [NSDictionary] {
