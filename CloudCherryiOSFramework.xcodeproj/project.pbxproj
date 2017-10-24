@@ -583,6 +583,7 @@
 				C9B288C31F947CC200904290 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		C9D6F0591D94FDCF00BE8273 /* Build configuration list for PBXProject "CloudCherryiOSFramework" */ = {
 			isa = XCConfigurationList;
