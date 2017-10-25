@@ -32,7 +32,7 @@ var POST_ANSWER_ALL = "SurveyByToken/\(SDKSession.surveyToken)"
 
 var GET_SURVEY_THROTTLE_LOGIC = "SurveyThrottleLogic/\(SDKSession.location)"
 var POST_THROTTLING = "Throttling"
-var POST_THROTTLING_ADD_ENTIRES = "Throttling/AddEntires"
+var POST_THROTTLING_ADD_ENTIRES = "Throttling/AddEntries"
 
 var _IS_USING_STATIC_TOKEN = Bool()
 
