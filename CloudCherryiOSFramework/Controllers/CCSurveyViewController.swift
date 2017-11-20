@@ -64,7 +64,15 @@ class questionCounterLabel : UILabel {
     
 }
 
+public enum SurveyExitedAt {
+    case WELCOME_SCREEN
+    case PARTIAL_COMPLETION
+    case COMPLETION
+}
 
+protocol CCSurveyDelegate {
+    func surveyExited(withStatus iStatus: SurveyExitedAt, andSurveyToken iSurveyToken: String)
+}
 
 class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     
@@ -72,11 +80,14 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // MARK: - Variables
     
     
+    var surveyDelegate: CCSurveyDelegate?
+    
     var keyboardAppeared = false
     var yOffset: CGFloat = 0
     
     var welcomeText = String()
     var thankYouText = String()
+    var closeButton = UIButton()
     
     var filteredQuestions = [NSDictionary]()
     var surveyQuestions = [CCQuestion]()
@@ -386,6 +397,12 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         REMOVE_LOADING()
         
         
+        // Throttling Entry
+        
+        
+        addThrottleEntry(isOpen: false)
+        
+        
         // Setting up Survey View
         
         
@@ -398,13 +415,26 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         // Setting up Welcome Text
         
         
-        faciliationTextLabel = UILabel(frame: CGRect(x: 0, y: 10, width: surveyView.frame.width, height: 20))
+        faciliationTextLabel = UILabel(frame: CGRect(x: 30, y: 10, width: surveyView.frame.width - 60, height: 20))
         faciliationTextLabel.font = HELVETICA_NEUE(18)
         faciliationTextLabel.numberOfLines = 2
         faciliationTextLabel.textAlignment = .center
+        faciliationTextLabel.adjustsFontSizeToFitWidth = true
         faciliationTextLabel.text = self.welcomeText
         
         surveyView.addSubview(faciliationTextLabel)
+        
+        
+        // Setting up Close Button
+        
+        
+        closeButton.frame = CGRect(x: faciliationTextLabel.frame.maxX, y: 5, width: 25, height: 25)
+        closeButton.backgroundColor = UIColor.lightGray
+        closeButton.setTitleColor(.white, for: .normal)
+        closeButton.setTitle("X", for: .normal)
+        closeButton.addTarget(self, action: #selector(closeSurvey), for: .touchUpInside)
+        
+        surveyView.addSubview(closeButton)
         
         
         // Setting up Primary Button
@@ -468,6 +498,22 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     // MARK: - Private Methods
     
     
+    // Handles survey closing
+    
+    
+    func closeSurvey() {
+        if (questionCounter == 0) {
+            self.navigationController?.dismiss(animated: true, completion: {
+                self.surveyDelegate?.surveyExited(withStatus: SurveyExitedAt.WELCOME_SCREEN, andSurveyToken: SDKSession.surveyToken)
+            })
+        } else {
+            self.navigationController?.dismiss(animated: true, completion: {
+                self.surveyDelegate?.surveyExited(withStatus: SurveyExitedAt.PARTIAL_COMPLETION, andSurveyToken: SDKSession.surveyToken)
+            })
+        }
+    }
+    
+    
     // Handles Button Tap for Primary button
     
     
@@ -477,10 +523,17 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         if (primaryButtonCounter == 1) {
             
+            closeButton.removeFromSuperview()
             faciliationTextLabel.isHidden = true
             primaryButton.isHidden = true
             footerLabel.isHidden = true
             cloudCherryLogoImageView.isHidden = true
+            
+            
+            // Throttling Entry
+            
+            
+            addThrottleEntry(isOpen: true)
             
             
             // Setting up Header View for Survey View
@@ -495,11 +548,23 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             // Setting up Text Label in Header View
             
             
-            headerLabel = UILabel(frame: CGRect(x: 10, y: 15, width: headerView.frame.width - 20, height: 20))
+            headerLabel = UILabel(frame: CGRect(x: 10, y: 15, width: headerView.frame.width - 40, height: 20))
             headerLabel.adjustsFontSizeToFitWidth = true
             headerLabel.font = HELVETICA_NEUE(15)
             headerLabel.textColor = UIColor.white
             headerView.addSubview(headerLabel)
+            
+            
+            // Setting up Close Button
+            
+            
+            closeButton.frame = CGRect(x: headerLabel.frame.maxX, y: 12.5, width: 25, height: 25)
+            closeButton.backgroundColor = UIColor.lightGray
+            closeButton.setTitleColor(.white, for: .normal)
+            closeButton.setTitle("X", for: .normal)
+            closeButton.addTarget(self, action: #selector(closeSurvey), for: .touchUpInside)
+            
+            headerView.addSubview(closeButton)
             
             
             // Setting up Footer View for Survey View
@@ -563,7 +628,9 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
             
         } else {
             
-            self.navigationController?.dismiss(animated: true, completion: nil)
+            self.navigationController?.dismiss(animated: true, completion: {
+                self.surveyDelegate?.surveyExited(withStatus: SurveyExitedAt.COMPLETION, andSurveyToken: SDKSession.surveyToken)
+            })
             
         }
         
@@ -670,9 +737,6 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         if (aQuestion.displayType != "End") {
             if !(self.questionCounter - 1 == 0) {
-                
-                print("Print Leading Text: ", aQuestion.leadingDisplayText)
-                
                 if aQuestion.leadingDisplayText is [String] {
                     
                 } else if let aDisplayTexts = aQuestion.leadingDisplayText as? [NSDictionary] {
@@ -892,6 +956,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         case "End":
             
             questionCtrLabel.removeFromSuperview()
+            closeButton.removeFromSuperview()
             
             headerView.isHidden = true
             footerView.isHidden = true
@@ -1666,7 +1731,7 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
     }
     
     
-    //Conditional Text Check
+    // Conditional Text Check
     
     
     func conditionCheck(_ iFilterQuestion:NSDictionary) -> Bool {
@@ -1951,5 +2016,45 @@ class CCSurveyViewController: UIViewController, FloatRatingViewDelegate {
         
         iFromArray = iFromArray.filter{$0 != iStringToRemove}
         
+    }
+    
+    
+    // Handles Survey Throttling Entry API calls
+    
+    
+    func addThrottleEntry(isOpen iIsOpen: Bool) {
+        let aThrottlingEntry = self.createAndAddThrottleEntry(withTimeStamp: self.getTimeStamp(), andIsOpen: iIsOpen)
+        let anEntries: [NSDictionary] = [aThrottlingEntry]
+        
+        let anAPI = "\(BASE_URL_2)\(POST_THROTTLING_ADD_ENTIRES)"
+        
+        let anURLHandler = CCURLHandler()
+        anURLHandler.initWithURLString(anAPI)
+        
+        let _ = anURLHandler.responseForJSONObject(anEntries as AnyObject)
+    }
+    
+    
+    func createAndAddThrottleEntry(withTimeStamp iTimeStamp: String, andIsOpen iIsOpen: Bool) -> NSDictionary {
+        let aThrottlingEntry = NSMutableDictionary()
+        aThrottlingEntry["user"] = SDKSession.username
+        aThrottlingEntry["mobile"] = SDKSession.uniqueMobile
+        aThrottlingEntry["emailId"] = SDKSession.uniqueEmail
+        aThrottlingEntry["customUId"] = ""
+        aThrottlingEntry["surveySentDate"] = iIsOpen ? "" : iTimeStamp
+        aThrottlingEntry["surveyOpenedDate"] = iIsOpen ? iTimeStamp : ""
+        aThrottlingEntry["channel"] = ""
+        aThrottlingEntry["isOpened"] = iIsOpen
+        
+        return aThrottlingEntry
+    }
+    
+    
+    func getTimeStamp() -> String {
+        let aDateFormatter = DateFormatter()
+        aDateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        
+        let aDateString = aDateFormatter.string(from: Date())
+        return aDateString
     }
 }

@@ -11,8 +11,13 @@ import UIKit
 
 var _ANALYTICS_DATA = [NSDictionary]()
 
-open class SurveyCC: NSObject {
+public protocol SurveyCCDelegate {
+    func surveyExited(withStatus iStatus: SurveyExitedAt, andSurveyToken iSurveyToken: String)
+}
+
+open class SurveyCC: NSObject, CCSurveyDelegate {
     
+    public var surveyDelegate: SurveyCCDelegate?
     
     /**
      Initalize the CloudCherry SDK with username and password. This method has to be called mandatorily.
@@ -251,6 +256,7 @@ open class SurveyCC: NSObject {
                 
                 let aSurveyController = CCSurveyViewController()
                 aSurveyController.modalPresentationStyle = .overCurrentContext
+                aSurveyController.surveyDelegate = self
                 let aNavigationController = UINavigationController(rootViewController: aSurveyController)
                 
                 iController.present(aNavigationController, animated: true, completion: nil)
@@ -270,6 +276,7 @@ open class SurveyCC: NSObject {
                 SDKSession.rootController = iController
                 
                 let aSurveyController = CCSurveyViewController()
+                aSurveyController.surveyDelegate = self
                 let aNavigationController = UINavigationController(rootViewController: aSurveyController)
                 aNavigationController.view.backgroundColor = UIColor.clear
                 aNavigationController.view.isOpaque = false
@@ -353,6 +360,14 @@ open class SurveyCC: NSObject {
                 }
             }
         }
+    }
+    
+    
+    // MARK: - CCSurveyDelegate Method
+    
+    
+    func surveyExited(withStatus iStatus: SurveyExitedAt, andSurveyToken iSurveyToken: String) {
+        self.surveyDelegate?.surveyExited(withStatus: iStatus, andSurveyToken: iSurveyToken)
     }
 
 }
